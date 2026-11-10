@@ -1,8 +1,8 @@
 # MAGNA TRACE — Delivery Plan v1.0
 
-> **Inputs:** `docs/product.md` v1.4 FINAL (what) · `docs/architecture.md` v1.1 (how). This file says **who does what, in which order**.
-> **Team:** four students, 24 hours. Replace A–D with names. Times are hours from the start (**H+0**) and are targets, not guarantees.
-> **Rule:** P0 = one live journey Copilot → backend → Oracle → clarification → evidence → handover, run twice. Nothing else outranks it.
+> **Status:** FINAL / APPROVED — team development baseline. Inputs are `docs/product.md` v1.0 and `docs/architecture.md` v1.1.
+> **Team:** four students, 24 hours. Hour fields are nonbinding estimates. Dependencies, gates and each task's acceptance criteria govern execution.
+> **P0:** run the live Copilot → backend → Oracle journey twice, including clarification, recorded answer, evidence and a concise evidence-backed handover from the active case. Persistent history and richer reports/exports are P1.
 
 ## 1. Roles
 
@@ -36,12 +36,18 @@ Each student has **19 h of own tasks + 3 h shared** (syncs, two rehearsals, pitc
 | --- | --- | ---: | --- | --- |
 | A1 | Oracle container up; SELECT-only user; **one minimal read-only query function** (`COUNT(*)` of measurements) handed to B first; then `data-baseline.sql` (`COUNT(*)` all four tables, distinct stations/serials, units, raw codes, row uniqueness) | 2 | H+0–2 | B has the query by H+2; baseline reruns cleanly |
 | A2 | `oracle_repo.py`: fixed parameterized SELECTs (stations; measurements by station/time/serial), row limit, timeout, deterministic order | 3 | H+2–5 | B calls it; no string-built SQL |
-| A3 | `measurements.py`: `Decimal` parsing, bounds, quality flags, deviation, three independent statuses + pytest | 4 | H+5–9 | Tests cover equality, blank, malformed, reversed/missing limits, `1001`, `NULL` |
-| A4 | Pick demo station; confirm ≥ 3 values and the in-range `1001` row; hand fixtures to B, C, D | 2 | H+3–9 | Station and rows recorded in `decisions.md` |
+| A3 | `measurements.py`: preserve raw inputs; parse Decimal; compute range, quality flags and raw code independently | 4 | H+5–9 | Hand arithmetic and fixtures cover equality, missing/invalid inputs, partial/reversed bounds, raw `1001` and null |
+| A4 | Pick demo station; verify ≥ 3 abnormal observations and the in-range coded row independently; hand safe fixtures to B/C/D | 2 | H+3–9 | Reproducible SQL and permitted scope references recorded; exports stay local |
 | A5 | Verify join keys (serial, station, work order), units, timestamp meaning | 2 | H+9–11 | Each key marked verified or disabled |
 | A6 | Failure paths: Oracle down, timeout, empty result | 1 | H+11–12 | Correct error codes, no fallback data |
-| A7 | `comparisons.py`: two modes, six criteria, `NOT_COMPARABLE` reasons + tests. **Starts only when A2–A6 are done and G1 is passed**; uses verified keys from A5 only | 4 | H+12–18 | Fixture for allowed and refused comparison; nothing forced |
-| A8 | Integration fixes | 1 | H+18–21 | — |
+| A7 | Conditional `comparisons.py` for both modes under architecture §7. Requires A2–A6, G1 and stable P0 including A8. | 4 | H+12–18 | Both modes checked for allowed and refused comparisons, counts, coverage, warnings and specific `NOT_COMPARABLE` reasons |
+| A8 | P0 integration support for B; verify A-owned fixes with D | 1 | H+18–21 | B consumes A2/A3/A6 outputs; D checks independent expectations on the integrated revision |
+
+**A dependency order.** A1 → A2 → A3 → A4 → A5 → A6 → A8. A7 follows only if its gates hold. D5 independently checks each deliverable.
+
+**A3 contract.** Null, empty and whitespace-only numeric input → `MISSING`; invalid nonempty input → `UNPARSEABLE`. An invalid value or unusable interval gives `NOT_EVALUABLE`; two absent bounds give `LIMIT_UNKNOWN`, malformed/reversed bounds give `LIMIT_INVALID`, and one valid bound with the other missing permits a flagged one-sided check (`PARTIAL_BOUNDS`). Preserve the raw fail code and flag `SEMANTICS_UNKNOWN` for undocumented codes including null; the numeric status is independent.
+
+**A7 contract.** `same_station_across_serials` holds station fixed and counts distinct comparable serials. `same_serial_across_stations` holds serial fixed and counts distinct comparable stations. Require two entities on that dimension, warn `LOW_SAMPLE` at exactly two, and clear the warning at three. Return row count, distinct serials, distinct stations and time coverage. Apply verified keys, matching measurement, compatible recorded units, Decimal-equal bounds, compatible test/product semantics and parseable values; refuse each failed criterion explicitly.
 
 ### Student B — Backend & cases (19 h)
 
@@ -92,18 +98,18 @@ Each student has **19 h of own tasks + 3 h shared** (syncs, two rehearsals, pitc
 | A → B → C | **Early Oracle path for G0:** one read-only query (A1) → `health/echo` with Oracle value (B1) → Copilot call (C4) | H+2 → H+4 → H+6 |
 | D → A, B, C | Test cases and expected values (D5) | H+4 |
 | A → B | Repository functions (A2), measurement results (A3) | H+5, H+9 |
-| A → B, C, D | Demo station and verified rows (A4) | H+9 |
+| A → B, C, D | Permitted demo scope, reproducible SQL references and synthetic fixtures (A4) | H+9 |
 | C → all | G0 result and auth mechanism (C4) | H+6 |
 | B → C | Working five endpoints (B6) | H+14 |
-| A → B, D | Comparison module (A7) | H+18 |
+| A → B, D | Conditional comparison module (A7), if shipped | H+18 |
 
-A contract change after H+3 needs agreement from B, C and D and a line in `decisions.md`.
+After the B2 contract freeze, a public contract change requires agreement from B, C and D, a dated entry in `docs/decisions.md`, and corresponding spec and drift-test updates.
 
 ## 5. Gate checklist
 
 | Gate | Owner | Checker | Proof |
 | --- | --- | --- | --- |
-| G0 | C | B | Two real agent calls, matching request IDs; `401` without key |
+| G0 | C | B | Two real authenticated agent calls, the second returning A1's live Oracle count; matching request IDs and `401` without key |
 | G1 | A | D | Baseline SQL kept; ≥ 3 values match independent check; numeric tests green |
 | G2 | B + C | D | Full journey in real chat; agent calls `record_answer` itself; label stays `UNDETERMINED` |
 | G3 | D | A | Two clean runs; all negative scenarios; no secrets in repo |
@@ -113,10 +119,10 @@ A contract change after H+3 needs agreement from B, C and D and a line in `decis
 - **G0 not passed at H+6:** C and B go to mentors immediately; D pauses the dashboard and helps C. No fallback UI is presented as meeting the Copilot requirement.
 - **Dashboard never blocks P0:** D5, D6 and D8 take priority over D2–D4 whenever a gate is due. Dashboard requests for backend changes wait until G2.
 - **Dashboard never holds the Copilot key:** not in React code, browser storage or any `VITE_`-prefixed variable (those are bundled into the client). Local demo goes through the dev proxy, which reads the key from a server-side variable. Public API routes keep full authentication; no CORS opening or auth exemption for the UI.
-- **Comparison never delays the MVP.** Order for A: measurements and limits → evidence-ready data → failure paths → comparison on verified data. It ships only if its tests pass by H+18; incompatible data returns `NOT_COMPARABLE`, never a constructed result; otherwise `compare_case` stays disabled.
+- **Comparison never delays the MVP.** Keep `compare_case` disabled unless A7 meets its prerequisites and its independently verified acceptance criteria.
 - **Cut order:** RAG → comparison view in dashboard → comparison module → dashboard polish → `list_stations`. Never cut: correct numbers, evidence resolution, the live Copilot journey.
 - **Feature freeze at H+21.** After that only blocker fixes, rehearsal and pitch.
-- **Scope note:** product v1.4 lists comparison and dashboard after P0. This plan runs them as a side track (D) and a post-G1 task (A) by team choice; neither counts toward P0 acceptance.
+- **Scope.** D develops the optional dashboard against the common contract in parallel. Comparison and richer reporting remain conditional. RAG requires approved manuals and permission to use them.
 
 ## 7. Git integration protocol
 
@@ -125,7 +131,7 @@ A contract change after H+3 needs agreement from B, C and D and a line in `decis
 - **Integrator:** **B** merges into `main`; **A** is backup. Nobody else pushes to `main`; no force-push, no history rewrite on shared branches.
 - **Before a merge:** the author merges current `main` into their branch and resolves conflicts there; **D** runs the tests on the result and confirms; only then B merges. A conflict in another owner's file is resolved together with that owner.
 - **Rhythm:** commit small and often; integrate at every sync (every 3 h) and before each gate. B tags `g0`, `g1`, `g2`, `g3` on `main` when a gate passes — a known-good point to return to.
-- **Git bundle, when direct push is unavailable:** the author runs `git bundle create trace-<name>-<HHMM>.bundle main..feature/<name>` and sends the file through the team channel. B runs `git bundle verify <file>`, then `git fetch <file> feature/<name>:incoming/<name>`, reviews, and merges as above. Bundles are based on the latest shared `main`; work is never passed by copying files over a checkout.
+- Use a full branch bundle when the receiver’s history is uncertain. For A, `git bundle create ../trace-student-a.bundle feature/student-a` includes reachable branch history. Use `main..feature/student-a` only after B confirms all prerequisite commits are present. B runs `git bundle verify <file>` in the receiving repository before `git fetch <file> feature/student-a:incoming/student-a`. Inspect outgoing history for secrets before authorized transfer.
 - **Never in Git or a bundle:** credentials, API keys, tunnel tokens, `.env`, Oracle dumps, exported rows.
 
 ## 8. Open questions to close early

@@ -2,25 +2,28 @@
 
 > **Audience:** any AI coding assistant (Codex, Claude Code, Copilot in the IDE, …) asked to write or change code in this repository, and the student who directs it.
 > **Not this file:** the instructions for the *runtime* Microsoft Copilot Studio agent that talks to technicians. Those live in `copilot/instructions.md`; their required content is listed in §9.
-> **Built from:** `docs/product.md` v1.4 FINAL · `docs/architecture.md` v1.1 · `docs/plan.md` v1.0 · review tips (comparison rules, case error code).
+> **Status:** FINAL / APPROVED — team development baseline. Use the canonical worktree files below. Archived drafts are provenance only.
 
 ---
 
 ## 1. How to use this file
 
 1. Read this file fully before the first change in a session.
-2. Then read only what the task needs: the task row in `docs/plan.md`, the matching section of `docs/architecture.md`, and the acceptance row in `docs/product.md`.
+2. Read the task row in `docs/plan.md`, the matching design in `docs/architecture.md`, the acceptance row in `docs/product.md` and relevant entries in `docs/decisions.md`. For A, check `docs/plan-a.md` and its progress ledger.
 3. Work on **one plan task at a time** (for example `A3`, `B4`). If you were not given a task ID, ask for it or name the one you believe applies before editing.
 
 **Precedence when documents disagree:**
 
 | Priority | Document | Answers |
 | --- | --- | --- |
-| 1 | `docs/product.md` v1.4 | What is built; what counts as P0 |
+| 1 | `docs/product.md` v1.0 | Product requirements and P0/P1 acceptance |
 | 2 | `docs/architecture.md` | How it is built: contracts, modules, security |
 | 3 | `docs/plan.md` | Who does what, in which order |
 | 4 | This file | How an AI agent behaves while doing it |
-| 5 | `docs/decisions.md` | Facts verified during the event — **overrides provisional values in all of the above** |
+| 5 | `tips.md` | Supplementary explanations of adopted rules |
+| 6 | `docs/plan-a.md` | A's steps, checks and progress ledger |
+
+`docs/decisions.md` records authority, rationale and status. A dated verified fact can close a provisional assumption. An open question cannot change an approved requirement.
 
 If two documents conflict and `docs/decisions.md` does not settle it, **stop and report the conflict**. Do not pick silently, and do not edit `docs/product.md` to make the conflict disappear.
 
@@ -37,7 +40,7 @@ Technician → Microsoft Copilot Studio agent → authenticated HTTPS tunnel
 
 - **Copilot** conducts the conversation and chooses tools.
 - **The Python backend** owns every fact: values, limits, deviations, evidence IDs, case state, assessment label and next-action candidates.
-- **P0** is one end-to-end journey from the real Copilot chat: open a case for a station → ≥ 3 SQL-checkable findings with evidence IDs → one clarification question → technician answer recorded → updated next check → handover summary. It must run twice.
+- **P0** is one end-to-end journey from the real Copilot chat: open a case for a station → ≥ 3 SQL-checkable findings with evidence IDs → one clarification question → technician answer recorded → updated next check → handover summary. It must run twice. Basic evidence-backed handover uses the active case. Persistence, richer handover and PDF/HTML exports are P1.
 - **The product does not** prove causes, certify quality, predict failures or authorize repairs.
 
 ## 3. Invariants — never break these
@@ -109,10 +112,10 @@ Versions (Python, Node, Oracle image) are whatever the team's environment alread
 ### 7.1 `oracle_repo.py` (A)
 
 - A fixed set of functions, each wrapping one constant SQL string with bind variables.
-- Every query has: a row limit, a timeout, and explicit ordering (`BOOK_STAMP` plus a deterministic tie-break).
+- Apply a timeout to every query. Limit and order measurement rows by `BOOK_STAMP` plus a deterministic tie-break before returning them. Order station results by station ID. The scalar count returns one aggregate.
 - P0 reads `SNO_MEASUREMENT_DATA`. `MACHINE_LINES`, `SNO_BOOKINGS_WP` and `WORKORDERS` may be joined **only** through keys marked verified in `docs/decisions.md` (task `A5`). Do not join because column names look alike.
 - Return raw column values as strings exactly as stored: `MEASURE_VALUE`, `LOWER_LIMIT`, `UPPER_LIMIT`, `UNIT`, `MEASURE_FAIL_CODE`, station, serial, `BOOK_STAMP`.
-- Return the real row count and a truncation flag when the limit was hit.
+- Return the total matching rows before the cap and set `truncated` only when matching rows were omitted.
 - Connection failure → raise a typed error mapped to `SOURCE_UNAVAILABLE`; timeout → `TIMEOUT`.
 
 **Early G0 path (task `A1`):** the first deliverable is one minimal function returning `COUNT(*)` of the measurement table. B exposes it through `health/echo`; C calls it from Copilot. Do this before building the rest of the repository.
@@ -139,12 +142,12 @@ Bounds and status:
 | value < lower | `BELOW`, deviation = `lower − value` | — |
 | lower ≤ value ≤ upper | `WITHIN_RECORDED_BOUNDS` | — |
 | value equals a bound | `WITHIN_RECORDED_BOUNDS` (**provisional policy**) | — |
-| only one bound present, not breached | `WITHIN_RECORDED_BOUNDS` | `PARTIAL_BOUNDS` |
+| one valid bound, other missing | evaluate the recorded side (including a breach) | `PARTIAL_BOUNDS` |
 | no bounds | `NOT_EVALUABLE` | `LIMIT_UNKNOWN` |
-| lower > upper | `NOT_EVALUABLE` | `LIMIT_INVALID` |
+| lower > upper or a supplied bound is malformed | `NOT_EVALUABLE` | `LIMIT_INVALID`; classify nonempty malformed numeric text as `UNPARSEABLE` |
 | value missing or unparseable | `NOT_EVALUABLE` | `MISSING` / `UNPARSEABLE` |
 | unit absent | (unchanged) | `UNIT_UNKNOWN` |
-| fail code present, meaning undocumented | (unchanged) | `SEMANTICS_UNKNOWN` |
+| fail code undocumented or null | unchanged; retain original string or null | `SEMANTICS_UNKNOWN` |
 
 - Deviations are nonnegative and keep the precision of the inputs; do not round for display.
 - The fail code is passed through raw (`"1001"`, `null`, other). The reference fixture is the reported `Screw Count = 8`, bounds `8..8`, code `1001`: expected `WITHIN_RECORDED_BOUNDS` **and** raw code `1001`, with no PASS/FAIL wording.
@@ -163,7 +166,7 @@ Bounds and status:
 
 - In-memory store keyed by a random, unguessable `case_id`; bounded size, expiry, one lock per case.
 - States: `OPENED` → `EVIDENCE_LOADED` (or `NO_DATA` / `SOURCE_ERROR`) → `AWAITING_CLARIFICATION` → `ANSWER_RECORDED` → `NEXT_CHECK_OR_ESCALATE` → `HANDOVER_READY`.
-- **One error code for every missing case: `CASE_NOT_FOUND_OR_EXPIRED`.** With RAM-only storage the server cannot tell, after a restart, whether an ID ever existed, so it must not pretend to know. Do not introduce `CASE_EXPIRED` or `CASE_NOT_FOUND` as separate codes until persistence of past sessions exists (P1).
+- B returns `CASE_NOT_FOUND_OR_EXPIRED` for every nonexistent, expired or pre-restart case ID. RAM-only storage cannot distinguish the three histories.
 - An answer that contradicts a record is stored beside it and marked as a conflict; neither is deleted.
 - Do not add per-user isolation claims: the connector uses a shared key, so there is no user identity.
 
@@ -194,25 +197,25 @@ Every response uses the envelope:
 
 ### 7.7 `comparisons.py` (A) — extension, after P0 data work
 
-**Order is fixed:** correct measurements and limits → evidence-ready data → failure paths → comparison. Do not start this module while any of `A2`–`A6` is open or G1 is not passed.
+**Gate.** A7 follows completed A2–A6, student-verified G1 and stable P0 including A8. Use only relationships verified in A5.
 
 A comparison (`same_station_across_serials` or `same_serial_across_stations`) is allowed only when all hold:
 
 | # | Criterion | On failure |
 | --- | --- | --- |
-| 1 | Serial/station key verified at G1 | `NOT_COMPARABLE` |
+| 1 | Verified station/serial key for the chosen scope | `NOT_COMPARABLE` |
 | 2 | Same measurement name | `NOT_COMPARABLE` |
 | 3 | Compatible recorded units | `NOT_COMPARABLE` |
 | 4 | Limits **numerically equal after `Decimal` parsing** — `"1"` equals `"1.0"`; never compare raw limit strings | `NOT_COMPARABLE` |
-| 5 | Compatible test / product context, where that context is verified | `NOT_COMPARABLE` |
+| 5 | Verified compatible test semantics and product context | `NOT_COMPARABLE` |
 | 6 | All compared values parse | `NOT_COMPARABLE` |
-| 7 | At least 2 distinct comparable units | `NOT_COMPARABLE` |
+| 7 | At least two distinct comparable entities along the mode's comparison dimension | `NOT_COMPARABLE` |
 
-- **Small samples are flagged, not rejected.** Two comparable units can already be informative: with fewer than 3 distinct serials, return the result plus the warning `LOW_SAMPLE`.
-- Always return record count, distinct-serial count and time coverage. Repeated tests of one serial are not independent units.
+- `same_station_across_serials` fixes the station and uses `COUNT(DISTINCT serial_number)` over comparable rows. `same_serial_across_stations` fixes the serial and uses `COUNT(DISTINCT station_number)` over comparable rows.
+- Fewer than two comparable entities → `NOT_COMPARABLE`; exactly two → eligible with `LOW_SAMPLE`; three or more → eligible without that warning, provided all other criteria hold. Return row count, distinct serials, distinct stations and source time coverage. Repeated rows add no independent entity.
 - `NOT_COMPARABLE` names the failed criterion. Never construct a result to avoid returning it.
 - A comparison is evidence for hypotheses. It does **not** change the P0 assessment label.
-- How to treat rows where the unit is missing on both sides is decided at G1 from the real data; until then they are not comparable.
+- Require compatible recorded units and numerically comparable bounds. Missing data that prevents a compatibility check requires a specific refusal. Never infer conversion or event identity.
 
 ### 7.8 `copilot/` (C)
 
@@ -262,11 +265,13 @@ When asked to draft or edit those instructions, they must make the runtime agent
 - Before a merge request, the branch owner merges current `main` into the feature branch and resolves conflicts there. A conflict inside another owner's file is resolved with that owner, not by choosing a side.
 - Commit small and often, one logical change per commit, message starting with the task ID: `A3: reject ambiguous decimal separators`.
 - Commit or push only when the student asks. Never amend or squash commits you did not create in this session.
-- **Git bundle, when direct push is unavailable:** `git bundle create trace-<name>-<HHMM>.bundle main..feature/<name>`. The integrator runs `git bundle verify <file>` and `git fetch <file> feature/<name>:incoming/<name>`. Work is never transferred by copying files over a checkout.
+- Use a full branch bundle when the receiver’s history is uncertain. For A, `git bundle create ../trace-student-a.bundle feature/student-a` includes reachable branch history. Use `main..feature/student-a` only after B confirms all prerequisite commits are present. B runs `git bundle verify <file>` in the receiving repository before `git fetch <file> feature/student-a:incoming/student-a`. Inspect outgoing history for secrets before authorized transfer.
 - Before any commit, check the staged diff for secrets and data dumps (I-11). If a secret was committed, stop and tell the student at once — do not try to hide it with a history rewrite.
 - Gate tags `g0`–`g3` on `main` are created by the integrator only.
 
 ## 11. Definition of done for a task
+
+On resumption inspect Git status, relevant commits, the canonical task and the latest checkpoint. Record changed files, actual checks, independent evidence, remaining blockers and the next single task before ending a session.
 
 - [ ] The change stays inside the owner's files (§5).
 - [ ] The plan row's "Done when" condition is met and you can show how.
@@ -296,7 +301,7 @@ Wording rules:
 
 Stop work and ask the student when:
 
-- The task needs a file outside the owner's area, or a contract change after H+3.
+- The task needs a file outside the owner's area, or a public contract change after the B2 freeze.
 - Real data contradicts a documented assumption (number format, units, uniqueness, code values).
 - A requirement can only be met by breaking an invariant in §3.
 - You would need credentials, a tunnel token, or access to the tenant.
@@ -342,7 +347,7 @@ When a student resolves one of these, the answer goes into `docs/decisions.md` a
 | Evidence ID | Case-local reference `E-<case>-<n>` to an immutable captured item |
 | Range status | `ABOVE`, `BELOW`, `WITHIN_RECORDED_BOUNDS`, `NOT_EVALUABLE` |
 | Quality flag | `MISSING`, `UNPARSEABLE`, `LIMIT_UNKNOWN`, `LIMIT_INVALID`, `PARTIAL_BOUNDS`, `UNIT_UNKNOWN`, `SEMANTICS_UNKNOWN` |
-| `LOW_SAMPLE` | Comparison warning: fewer than 3 distinct serials; result is shown, not rejected |
+| `LOW_SAMPLE` | Eligible comparison with exactly two distinct comparable serials (fixed station) or stations (fixed serial) |
 | `NOT_COMPARABLE` | A comparison criterion failed; the response names which |
 | G0–G3 | Gates: live Copilot call · data correctness · full diagnostic journey · demo readiness |
 | P0 / P1 | Required MVP / extensions after the MVP works |
@@ -353,6 +358,6 @@ When a student resolves one of these, the answer goes into `docs/decisions.md` a
 | Source | Incorporated as |
 | --- | --- |
 | Tip: limits `"1"` and `"1.0"` differ as strings but are equal numbers | Limits compared as parsed `Decimal` (§7.2, §7.7 criterion 4); architecture §7 updated |
-| Tip: two comparable units can still be useful | Minimum 2 units; `LOW_SAMPLE` warning below 3 serials instead of rejection (§7.7); architecture §7 updated |
+| Comparison coverage | Count distinct entities on the changing dimension and warn at exactly two (§7.7) |
 | Tip: after a restart the server cannot know an ID existed | Single code `CASE_NOT_FOUND_OR_EXPIRED` (§7.4, §7.6, §9); architecture and plan already aligned |
 | Plan review | Early G0 path, React key rule, QA from contract freeze, Git protocol (§7.1, §7.9, §8, §10) |
