@@ -1,0 +1,2 @@
+openai>=1.40
+mcp>=1.9,<2  # code uses the v1 client API
