@@ -2,6 +2,8 @@
 
 Prepared 2026-11-10 by Student D's preparation task. The H/K cases are synthetic hand-arithmetic cases, not Oracle observations, B2 examples or backend results. O01–O03 below separately record Student D’s redacted manual SQL verification report. No implementation was run to derive expectations. Hxx/Oxx are checklist identifiers, never evidence IDs. See [QA checklist](qa_checklist.md) for dependencies and conflicts.
 
+Reconciled for D5 against the team-approved files in `/home/nikita/Documents/Важный_файл_Хакатон/`: `decisions.md` D03–D06 (dated 2026-11-10), `architecture.md` §§3–5/7 and `AGENTS.md` §7.2. Approval was confirmed by Student D. Repository source-document migration is outside this update; no source document is copied or changed. Decision approval settles expectations, not execution results.
+
 ## Hand-calculated expectations
 
 Quoted inputs denote raw strings; `null` denotes an absent database value, not the string `"NULL"`. Values/limits below are unitless synthetic inputs with a known test unit supplied unless stated otherwise. Raw values must be preserved. Numeric results describe mathematical expectations; B2 must finalize JSON formatting and deviation fields for within-bounds/not-evaluable cases. “No breach” does not prescribe null versus zero on the wire.
@@ -17,7 +19,7 @@ All application comparisons are **PENDING EXECUTION**. Equality expectations are
 | H05 | `"8"` | `"8"` | `"8"` | 8 = both bounds; no breach | WITHIN_RECORDED_BOUNDS (provisional equality) | None |
 | H06 | `" -0.5 "` | `"-1"` | `"0"` | Trim for parsing only; −1 < −0.5 < 0 | WITHIN_RECORDED_BOUNDS | None |
 | H07 | `"0.300000000000000001"` | `"0"` | `"0.3"` | Exact subtraction = **0.000000000000000001** | ABOVE | None |
-| H08 | Each of `""`, `"   "`, null | `"0"` | `"1"` | No numeric value; no numeric deviation | NOT_EVALUABLE | BLOCKED: MISSING (AGENTS) vs UNPARSEABLE for blanks (architecture); resolve C-2 |
+| H08 | Each of `""`, `"   "`, null | `"0"` | `"1"` | No numeric value; no numeric deviation | NOT_EVALUABLE | MISSING — approved D04; architecture §4 |
 | H09 | Each of `"abc"`, `"12mm"`, `"NaN"`, `"Infinity"`, `"1e3"` | `"0"` | `"1"` | Strict format rejects each; no calculation | NOT_EVALUABLE | UNPARSEABLE |
 | H10 | Each of `"1,5"`, `"1.234,5"`, `"1 000"` | `"0"` | `"2000"` | Ambiguous separators rejected; do not normalize | NOT_EVALUABLE | UNPARSEABLE |
 | H11 | `"5"` | `"10"` | `"1"` | 10 > 1 makes bounds invalid; no deviation | NOT_EVALUABLE | LIMIT_INVALID |
@@ -26,18 +28,18 @@ All application comparisons are **PENDING EXECUTION**. Equality expectations are
 | H14 | `"3.25"` | `"4.00"` | null | 4.00 − 3.25 = **0.75** | BELOW | PARTIAL_BOUNDS |
 | H15 | `"5"` | null | `"6"` | 5 ≤ 6; lower unknown; no recorded breach | WITHIN_RECORDED_BOUNDS | PARTIAL_BOUNDS |
 | H16 | `"6.125"` | null | `"6.000"` | 6.125 − 6.000 = **0.125** | ABOVE | PARTIAL_BOUNDS |
-| H17 | `"5"` | `"abc"` | `"6"` | Lower bound cannot be parsed; do not guess a bound or result | BLOCKED pending A/B2 malformed-bound policy | Exact flags/status unspecified |
+| H17 | `"5"` | `"abc"` | `"6"` | Nonempty lower bound is malformed; interval unusable, no numeric deviation; do not evaluate upper side alone | NOT_EVALUABLE | LIMIT_INVALID and UNPARSEABLE — D04; architecture §4; AGENTS §7.2 |
 | H18 | `"5"` | `"0"` | `"10"` | 0 < 5 < 10; unit absent | WITHIN_RECORDED_BOUNDS | UNIT_UNKNOWN (range unchanged) |
 
-Numeric equality cross-check: parsed `"1"` = parsed `"1.0"`; their difference is 0. This does not establish permission for an extension comparison; raw-limit and sample-count conflicts C-3 remain unresolved.
+Numeric equality cross-check: parsed `"1"` = parsed `"1.0"`; their difference is 0. Approved D06 resolves C-3 with Decimal-equal bounds and mode-specific distinct-entity counts. This equality check does not enable a P1 comparison; no P1 feature is added here.
 
 ## Raw code independence
 
 | Scenario | Inputs from above | Raw fail code | Expected independent outcome |
 | --- | --- | --- | --- |
 | K01 | H05, synthetic Screw Count example | `"1001"` | Within recorded bounds provisionally; preserve code; SEMANTICS_UNKNOWN; no PASS/FAIL. This reproduces a reported pattern only, not a verified Oracle row. |
-| K02 | H05 | null | Same numeric outcome; preserve JSON null, unknown semantics, never PASS. Exact SEMANTICS_UNKNOWN flag blocked on C-4. |
-| K03 | H01 | null | ABOVE, deviation 2.592; null does not suppress deviation or prove a failure-code meaning. Flag policy blocked on C-4. |
+| K02 | H05 | null | WITHIN_RECORDED_BOUNDS (provisional equality); preserve JSON null and include SEMANTICS_UNKNOWN under approved D05. Meaning remains unknown; never infer PASS. |
+| K03 | H01 | null | ABOVE, deviation 2.592; preserve JSON null and include SEMANTICS_UNKNOWN under approved D05. Null does not suppress deviation or establish code meaning. |
 | K04 | H01 | `"1001"` | ABOVE, deviation 2.592; preserve code and SEMANTICS_UNKNOWN independently. |
 | K05 | H06 | `"other-undocumented-code"` | Within recorded bounds; raw code unchanged with SEMANTICS_UNKNOWN; no diagnostic label derived from it. |
 
@@ -55,7 +57,7 @@ Only this authorized minimal summary is retained. No real serial numbers, comple
 
 Each supplied value exceeds its supplied upper limit. Expected range status is ABOVE when the full recorded bounds are valid; lower limits were not supplied in this redacted summary, so full bounds validation and the complete quality-flag set remain pending. Do not equate an omitted lower limit or unit here with a database NULL. Preserve raw code 1001 independently with unknown meaning (SEMANTICS_UNKNOWN); it never implies PASS/FAIL or explains the breach. Units, source timezone and lexical formatting beyond the supplied numbers are not established by this summary.
 
-The synthetic H01 case intentionally retains its synthetic upper limit 195.000 and deviation 2.592; it is distinct from real-summary O01. All H01–H18 and K01–K05 cases remain unchanged and pending application execution. These three upper breaches do not verify the in-range Screw Count pattern or NULL-code behavior.
+The synthetic H01 case intentionally retains its synthetic upper limit 195.000 and deviation 2.592; it is distinct from real-summary O01. Only H08/H17 and K02/K03 expectations were clarified under D04/D05; their inputs and all other synthetic rows are unchanged. All application execution remains pending. These three upper breaches do not verify the in-range Screw Count pattern or NULL-code behavior.
 
 Remaining verification steps (not executed by this update):
 
@@ -66,4 +68,4 @@ Remaining verification steps (not executed by this update):
 
 ## Remaining work
 
-B must publish B2 frozen schemas and tool/error example JSON, resolve contract conflicts with the relevant owners, and deliver B3–B6 evidence/cases/snapshot/API functionality and B7 mocked-repository API tests. A2/A3 repository and measurement logic remain dependencies for execution. Student D’s manual SQL verification of O01–O03 is recorded; full bounds/quality checks, expected-versus-API comparison and backend evidence resolution remain pending. C enables later real Copilot verification. No automated application tests, live failure runs, full D5 completion or gate passes are claimed by this update.
+B must publish B2 frozen schemas and tool/error example JSON, reflect approved D03–D05 in that contract (C-1 through C-4 are now reconciled), and deliver B3–B6 evidence/cases/snapshot/API functionality and B7 mocked-repository API tests. A2/A3 repository and measurement logic remain dependencies for execution. Student D’s manual SQL verification of O01–O03 is recorded; full bounds/quality checks, expected-versus-API comparison and backend evidence resolution remain pending. C enables later real Copilot verification. No automated application tests, live failure runs, full D5 completion or gate passes are claimed by this update.
