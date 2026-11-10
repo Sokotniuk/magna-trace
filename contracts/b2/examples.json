@@ -1,0 +1,1010 @@
+{
+  "notice": "SYNTHETIC ONLY. Not Oracle records, live API output, a gate result or a diagnostic conclusion. GET request.body represents path/query parameters; it is not an HTTP GET body.",
+  "cases": [
+    {
+      "name": "open_case",
+      "method": "POST",
+      "path": "/api/v1/cases",
+      "http_status": 200,
+      "request": {
+        "model": "OpenCaseRequest",
+        "body": {
+          "station_number": "SYNTHETIC-STATION",
+          "from": "2026-11-10T10:00:00",
+          "to": "2026-11-10T11:00:00",
+          "serial_number": null
+        }
+      },
+      "response": {
+        "model": "OpenCaseResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-1",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": {
+            "scope": {
+              "station_number": "SYNTHETIC-STATION",
+              "from": "2026-11-10T10:00:00",
+              "to": "2026-11-10T11:00:00",
+              "serial_number": null,
+              "row_count": 3,
+              "captured_row_count": 3,
+              "truncated": false,
+              "coverage_warnings": []
+            },
+            "observations_retrieved_at": "2026-11-10T12:00:00Z",
+            "findings": [
+              {
+                "measurement": "SYNTHETIC Torque",
+                "raw_value": "10.5",
+                "raw_lower": "8.0",
+                "raw_upper": "10.0",
+                "parsed_value": "10.5",
+                "deviation": "0.5",
+                "unit": "Nm",
+                "range_status": "ABOVE",
+                "quality_flags": [
+                  "SEMANTICS_UNKNOWN"
+                ],
+                "raw_fail_code": null,
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-1",
+                "calculation_evidence_id": "E-0123456789abcdef0123456789abcdef-2"
+              },
+              {
+                "measurement": "SYNTHETIC Count",
+                "raw_value": "8",
+                "raw_lower": "8",
+                "raw_upper": "8",
+                "parsed_value": "8",
+                "deviation": "0",
+                "unit": "count",
+                "range_status": "WITHIN_RECORDED_BOUNDS",
+                "quality_flags": [
+                  "SEMANTICS_UNKNOWN"
+                ],
+                "raw_fail_code": "1001",
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-3",
+                "calculation_evidence_id": "E-0123456789abcdef0123456789abcdef-4"
+              },
+              {
+                "measurement": "SYNTHETIC Invalid",
+                "raw_value": "abc",
+                "raw_lower": "0",
+                "raw_upper": "1",
+                "parsed_value": null,
+                "deviation": null,
+                "unit": null,
+                "range_status": "NOT_EVALUABLE",
+                "quality_flags": [
+                  "UNPARSEABLE",
+                  "UNIT_UNKNOWN",
+                  "SEMANTICS_UNKNOWN"
+                ],
+                "raw_fail_code": null,
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-5",
+                "calculation_evidence_id": "E-0123456789abcdef0123456789abcdef-6"
+              }
+            ],
+            "additional_evidence_ids": [],
+            "technician_reports": [],
+            "assessment": {
+              "label": "UNDETERMINED",
+              "hypotheses": [
+                {
+                  "classification": "HYPOTHESIS",
+                  "description": "Equipment or test-context explanation remains unverified.",
+                  "supporting_evidence_ids": [
+                    "E-0123456789abcdef0123456789abcdef-1"
+                  ],
+                  "counterevidence_ids": [],
+                  "limitations": [
+                    "No causal conclusion from captured measurements."
+                  ],
+                  "distinguishing_evidence": "Independent verified station context."
+                },
+                {
+                  "classification": "HYPOTHESIS",
+                  "description": "Product-context explanation remains unverified.",
+                  "supporting_evidence_ids": [
+                    "E-0123456789abcdef0123456789abcdef-1"
+                  ],
+                  "counterevidence_ids": [],
+                  "limitations": [
+                    "No causal conclusion from captured measurements."
+                  ],
+                  "distinguishing_evidence": "Verified product linkage and comparable measurements."
+                }
+              ],
+              "unknowns": [
+                "Physical cause",
+                "Meaning of raw fail codes",
+                "Source timezone"
+              ]
+            },
+            "next_action": {
+              "kind": "question",
+              "question_id": "Q-SYNTHETIC-1",
+              "text": "Do you know of fixture context changes not recorded in these measurements?",
+              "basis_evidence_ids": [
+                "E-0123456789abcdef0123456789abcdef-1"
+              ]
+            },
+            "warnings": [
+              "SOURCE_TIMEZONE_UNKNOWN",
+              "BOUND_EQUALITY_POLICY_PROVISIONAL",
+              "SEMANTICS_UNKNOWN",
+              "UNIT_UNKNOWN",
+              "RELATIONSHIPS_UNVERIFIED"
+            ]
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "get_evidence_1",
+      "method": "GET",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/evidence/E-0123456789abcdef0123456789abcdef-1",
+      "http_status": 200,
+      "request": {
+        "model": "EvidenceRequest",
+        "body": {
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "evidence_id": "E-0123456789abcdef0123456789abcdef-1"
+        }
+      },
+      "response": {
+        "model": "GetEvidenceResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-2",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": {
+            "evidence_id": "E-0123456789abcdef0123456789abcdef-1",
+            "classification": "OBSERVED",
+            "source_table": "HACKATON.SNO_MEASUREMENT_DATA",
+            "scope": {
+              "station_number": "SYNTHETIC-STATION",
+              "from": "2026-11-10T10:00:00",
+              "to": "2026-11-10T11:00:00",
+              "serial_number": null
+            },
+            "measurement": "SYNTHETIC Torque",
+            "raw_fields": {
+              "MEASURE_VALUE": "10.5",
+              "LOWER_LIMIT": "8.0",
+              "UPPER_LIMIT": "10.0",
+              "UNIT": "Nm",
+              "MEASURE_FAIL_CODE": null,
+              "station_number": "SYNTHETIC-STATION",
+              "serial_number": "SYNTHETIC-SERIAL",
+              "BOOK_STAMP": "2026-11-10 10:00:00"
+            },
+            "row_ordinal": 1,
+            "retrieved_at": "2026-11-10T12:00:00Z"
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "get_evidence_2",
+      "method": "GET",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/evidence/E-0123456789abcdef0123456789abcdef-2",
+      "http_status": 200,
+      "request": {
+        "model": "EvidenceRequest",
+        "body": {
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "evidence_id": "E-0123456789abcdef0123456789abcdef-2"
+        }
+      },
+      "response": {
+        "model": "GetEvidenceResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-3",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": {
+            "evidence_id": "E-0123456789abcdef0123456789abcdef-2",
+            "classification": "CALCULATED",
+            "input_evidence_ids": [
+              "E-0123456789abcdef0123456789abcdef-1"
+            ],
+            "rule": "value - upper = 10.5 - 10.0 = 0.5",
+            "result": {
+              "parsed_value": "10.5",
+              "deviation": "0.5",
+              "range_status": "ABOVE",
+              "quality_flags": [
+                "SEMANTICS_UNKNOWN"
+              ]
+            },
+            "retrieved_at": "2026-11-10T12:00:00Z"
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "get_evidence_3",
+      "method": "GET",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/evidence/E-0123456789abcdef0123456789abcdef-3",
+      "http_status": 200,
+      "request": {
+        "model": "EvidenceRequest",
+        "body": {
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "evidence_id": "E-0123456789abcdef0123456789abcdef-3"
+        }
+      },
+      "response": {
+        "model": "GetEvidenceResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-4",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": {
+            "evidence_id": "E-0123456789abcdef0123456789abcdef-3",
+            "classification": "OBSERVED",
+            "source_table": "HACKATON.SNO_MEASUREMENT_DATA",
+            "scope": {
+              "station_number": "SYNTHETIC-STATION",
+              "from": "2026-11-10T10:00:00",
+              "to": "2026-11-10T11:00:00",
+              "serial_number": null
+            },
+            "measurement": "SYNTHETIC Count",
+            "raw_fields": {
+              "MEASURE_VALUE": "8",
+              "LOWER_LIMIT": "8",
+              "UPPER_LIMIT": "8",
+              "UNIT": "count",
+              "MEASURE_FAIL_CODE": "1001",
+              "station_number": "SYNTHETIC-STATION",
+              "serial_number": "SYNTHETIC-SERIAL",
+              "BOOK_STAMP": "2026-11-10 10:00:01"
+            },
+            "row_ordinal": 2,
+            "retrieved_at": "2026-11-10T12:00:00Z"
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "get_evidence_4",
+      "method": "GET",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/evidence/E-0123456789abcdef0123456789abcdef-4",
+      "http_status": 200,
+      "request": {
+        "model": "EvidenceRequest",
+        "body": {
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "evidence_id": "E-0123456789abcdef0123456789abcdef-4"
+        }
+      },
+      "response": {
+        "model": "GetEvidenceResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-5",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": {
+            "evidence_id": "E-0123456789abcdef0123456789abcdef-4",
+            "classification": "CALCULATED",
+            "input_evidence_ids": [
+              "E-0123456789abcdef0123456789abcdef-3"
+            ],
+            "rule": "Equality is provisionally within recorded bounds; deviation 0",
+            "result": {
+              "parsed_value": "8",
+              "deviation": "0",
+              "range_status": "WITHIN_RECORDED_BOUNDS",
+              "quality_flags": [
+                "SEMANTICS_UNKNOWN"
+              ]
+            },
+            "retrieved_at": "2026-11-10T12:00:00Z"
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "get_evidence_5",
+      "method": "GET",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/evidence/E-0123456789abcdef0123456789abcdef-5",
+      "http_status": 200,
+      "request": {
+        "model": "EvidenceRequest",
+        "body": {
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "evidence_id": "E-0123456789abcdef0123456789abcdef-5"
+        }
+      },
+      "response": {
+        "model": "GetEvidenceResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-6",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": {
+            "evidence_id": "E-0123456789abcdef0123456789abcdef-5",
+            "classification": "OBSERVED",
+            "source_table": "HACKATON.SNO_MEASUREMENT_DATA",
+            "scope": {
+              "station_number": "SYNTHETIC-STATION",
+              "from": "2026-11-10T10:00:00",
+              "to": "2026-11-10T11:00:00",
+              "serial_number": null
+            },
+            "measurement": "SYNTHETIC Invalid",
+            "raw_fields": {
+              "MEASURE_VALUE": "abc",
+              "LOWER_LIMIT": "0",
+              "UPPER_LIMIT": "1",
+              "UNIT": null,
+              "MEASURE_FAIL_CODE": null,
+              "station_number": "SYNTHETIC-STATION",
+              "serial_number": "SYNTHETIC-SERIAL",
+              "BOOK_STAMP": "2026-11-10 10:00:02"
+            },
+            "row_ordinal": 3,
+            "retrieved_at": "2026-11-10T12:00:00Z"
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "get_evidence_6",
+      "method": "GET",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/evidence/E-0123456789abcdef0123456789abcdef-6",
+      "http_status": 200,
+      "request": {
+        "model": "EvidenceRequest",
+        "body": {
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "evidence_id": "E-0123456789abcdef0123456789abcdef-6"
+        }
+      },
+      "response": {
+        "model": "GetEvidenceResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-7",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": {
+            "evidence_id": "E-0123456789abcdef0123456789abcdef-6",
+            "classification": "CALCULATED",
+            "input_evidence_ids": [
+              "E-0123456789abcdef0123456789abcdef-5"
+            ],
+            "rule": "Invalid value cannot be evaluated",
+            "result": {
+              "parsed_value": null,
+              "deviation": null,
+              "range_status": "NOT_EVALUABLE",
+              "quality_flags": [
+                "UNPARSEABLE",
+                "UNIT_UNKNOWN",
+                "SEMANTICS_UNKNOWN"
+              ]
+            },
+            "retrieved_at": "2026-11-10T12:00:00Z"
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "get_evidence_7",
+      "method": "GET",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/evidence/E-0123456789abcdef0123456789abcdef-7",
+      "http_status": 200,
+      "request": {
+        "model": "EvidenceRequest",
+        "body": {
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "evidence_id": "E-0123456789abcdef0123456789abcdef-7"
+        }
+      },
+      "response": {
+        "model": "GetEvidenceResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-8",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": {
+            "evidence_id": "E-0123456789abcdef0123456789abcdef-7",
+            "classification": "TECHNICIAN_REPORTED",
+            "question_id": "Q-SYNTHETIC-1",
+            "answer_text": "A fixture context change was reported before these tests.",
+            "reported_at": "2026-11-10T12:01:00Z",
+            "attribution": "technician via shared connector",
+            "conflict_evidence_ids": []
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "record_answer",
+      "method": "POST",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/answers",
+      "http_status": 200,
+      "request": {
+        "model": "RecordAnswerRequest",
+        "body": {
+          "question_id": "Q-SYNTHETIC-1",
+          "answer_text": "A fixture context change was reported before these tests."
+        }
+      },
+      "response": {
+        "model": "RecordAnswerResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-9",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": {
+            "scope": {
+              "station_number": "SYNTHETIC-STATION",
+              "from": "2026-11-10T10:00:00",
+              "to": "2026-11-10T11:00:00",
+              "serial_number": null,
+              "row_count": 3,
+              "captured_row_count": 3,
+              "truncated": false,
+              "coverage_warnings": []
+            },
+            "observations_retrieved_at": "2026-11-10T12:00:00Z",
+            "findings": [
+              {
+                "measurement": "SYNTHETIC Torque",
+                "raw_value": "10.5",
+                "raw_lower": "8.0",
+                "raw_upper": "10.0",
+                "parsed_value": "10.5",
+                "deviation": "0.5",
+                "unit": "Nm",
+                "range_status": "ABOVE",
+                "quality_flags": [
+                  "SEMANTICS_UNKNOWN"
+                ],
+                "raw_fail_code": null,
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-1",
+                "calculation_evidence_id": "E-0123456789abcdef0123456789abcdef-2"
+              },
+              {
+                "measurement": "SYNTHETIC Count",
+                "raw_value": "8",
+                "raw_lower": "8",
+                "raw_upper": "8",
+                "parsed_value": "8",
+                "deviation": "0",
+                "unit": "count",
+                "range_status": "WITHIN_RECORDED_BOUNDS",
+                "quality_flags": [
+                  "SEMANTICS_UNKNOWN"
+                ],
+                "raw_fail_code": "1001",
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-3",
+                "calculation_evidence_id": "E-0123456789abcdef0123456789abcdef-4"
+              },
+              {
+                "measurement": "SYNTHETIC Invalid",
+                "raw_value": "abc",
+                "raw_lower": "0",
+                "raw_upper": "1",
+                "parsed_value": null,
+                "deviation": null,
+                "unit": null,
+                "range_status": "NOT_EVALUABLE",
+                "quality_flags": [
+                  "UNPARSEABLE",
+                  "UNIT_UNKNOWN",
+                  "SEMANTICS_UNKNOWN"
+                ],
+                "raw_fail_code": null,
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-5",
+                "calculation_evidence_id": "E-0123456789abcdef0123456789abcdef-6"
+              }
+            ],
+            "additional_evidence_ids": [],
+            "technician_reports": [
+              {
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-7",
+                "classification": "TECHNICIAN_REPORTED",
+                "question_id": "Q-SYNTHETIC-1",
+                "answer_text": "A fixture context change was reported before these tests.",
+                "reported_at": "2026-11-10T12:01:00Z",
+                "attribution": "technician via shared connector",
+                "conflict_evidence_ids": []
+              }
+            ],
+            "assessment": {
+              "label": "UNDETERMINED",
+              "hypotheses": [
+                {
+                  "classification": "HYPOTHESIS",
+                  "description": "Equipment or test-context explanation remains unverified.",
+                  "supporting_evidence_ids": [
+                    "E-0123456789abcdef0123456789abcdef-1"
+                  ],
+                  "counterevidence_ids": [],
+                  "limitations": [
+                    "No causal conclusion from captured measurements."
+                  ],
+                  "distinguishing_evidence": "Independent verified station context."
+                },
+                {
+                  "classification": "HYPOTHESIS",
+                  "description": "Product-context explanation remains unverified.",
+                  "supporting_evidence_ids": [
+                    "E-0123456789abcdef0123456789abcdef-1"
+                  ],
+                  "counterevidence_ids": [],
+                  "limitations": [
+                    "No causal conclusion from captured measurements."
+                  ],
+                  "distinguishing_evidence": "Verified product linkage and comparable measurements."
+                }
+              ],
+              "unknowns": [
+                "Physical cause",
+                "Meaning of raw fail codes",
+                "Source timezone"
+              ]
+            },
+            "next_action": {
+              "kind": "data_check",
+              "text": "Verify the reported context and its timing against authorized station records.",
+              "basis_evidence_ids": [
+                "E-0123456789abcdef0123456789abcdef-7",
+                "E-0123456789abcdef0123456789abcdef-1"
+              ]
+            },
+            "warnings": [
+              "SOURCE_TIMEZONE_UNKNOWN",
+              "BOUND_EQUALITY_POLICY_PROVISIONAL",
+              "SEMANTICS_UNKNOWN",
+              "UNIT_UNKNOWN",
+              "RELATIONSHIPS_UNVERIFIED"
+            ],
+            "report_evidence_id": "E-0123456789abcdef0123456789abcdef-7",
+            "change_summary": "Technician report added; observations preserved; next action updated."
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "get_handover",
+      "method": "GET",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/handover",
+      "http_status": 200,
+      "request": {
+        "model": "CaseRequest",
+        "body": {
+          "case_id": "0123456789abcdef0123456789abcdef"
+        }
+      },
+      "response": {
+        "model": "GetHandoverResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-10",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": {
+            "scope": {
+              "station_number": "SYNTHETIC-STATION",
+              "from": "2026-11-10T10:00:00",
+              "to": "2026-11-10T11:00:00",
+              "serial_number": null,
+              "row_count": 3,
+              "captured_row_count": 3,
+              "truncated": false,
+              "coverage_warnings": []
+            },
+            "observations_retrieved_at": "2026-11-10T12:00:00Z",
+            "observations": [
+              {
+                "measurement": "SYNTHETIC Torque",
+                "raw_value": "10.5",
+                "raw_lower": "8.0",
+                "raw_upper": "10.0",
+                "parsed_value": "10.5",
+                "deviation": "0.5",
+                "unit": "Nm",
+                "range_status": "ABOVE",
+                "quality_flags": [
+                  "SEMANTICS_UNKNOWN"
+                ],
+                "raw_fail_code": null,
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-1",
+                "calculation_evidence_id": "E-0123456789abcdef0123456789abcdef-2"
+              },
+              {
+                "measurement": "SYNTHETIC Count",
+                "raw_value": "8",
+                "raw_lower": "8",
+                "raw_upper": "8",
+                "parsed_value": "8",
+                "deviation": "0",
+                "unit": "count",
+                "range_status": "WITHIN_RECORDED_BOUNDS",
+                "quality_flags": [
+                  "SEMANTICS_UNKNOWN"
+                ],
+                "raw_fail_code": "1001",
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-3",
+                "calculation_evidence_id": "E-0123456789abcdef0123456789abcdef-4"
+              },
+              {
+                "measurement": "SYNTHETIC Invalid",
+                "raw_value": "abc",
+                "raw_lower": "0",
+                "raw_upper": "1",
+                "parsed_value": null,
+                "deviation": null,
+                "unit": null,
+                "range_status": "NOT_EVALUABLE",
+                "quality_flags": [
+                  "UNPARSEABLE",
+                  "UNIT_UNKNOWN",
+                  "SEMANTICS_UNKNOWN"
+                ],
+                "raw_fail_code": null,
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-5",
+                "calculation_evidence_id": "E-0123456789abcdef0123456789abcdef-6"
+              }
+            ],
+            "additional_evidence_ids": [],
+            "technician_reports": [
+              {
+                "evidence_id": "E-0123456789abcdef0123456789abcdef-7",
+                "classification": "TECHNICIAN_REPORTED",
+                "question_id": "Q-SYNTHETIC-1",
+                "answer_text": "A fixture context change was reported before these tests.",
+                "reported_at": "2026-11-10T12:01:00Z",
+                "attribution": "technician via shared connector",
+                "conflict_evidence_ids": []
+              }
+            ],
+            "assessment": {
+              "label": "UNDETERMINED",
+              "hypotheses": [
+                {
+                  "classification": "HYPOTHESIS",
+                  "description": "Equipment or test-context explanation remains unverified.",
+                  "supporting_evidence_ids": [
+                    "E-0123456789abcdef0123456789abcdef-1"
+                  ],
+                  "counterevidence_ids": [],
+                  "limitations": [
+                    "No causal conclusion from captured measurements."
+                  ],
+                  "distinguishing_evidence": "Independent verified station context."
+                },
+                {
+                  "classification": "HYPOTHESIS",
+                  "description": "Product-context explanation remains unverified.",
+                  "supporting_evidence_ids": [
+                    "E-0123456789abcdef0123456789abcdef-1"
+                  ],
+                  "counterevidence_ids": [],
+                  "limitations": [
+                    "No causal conclusion from captured measurements."
+                  ],
+                  "distinguishing_evidence": "Verified product linkage and comparable measurements."
+                }
+              ],
+              "unknowns": [
+                "Physical cause",
+                "Meaning of raw fail codes",
+                "Source timezone"
+              ]
+            },
+            "open_questions": [],
+            "gaps": [
+              "Physical cause",
+              "Meaning of raw fail codes",
+              "Source timezone",
+              "SOURCE_TIMEZONE_UNKNOWN",
+              "BOUND_EQUALITY_POLICY_PROVISIONAL",
+              "SEMANTICS_UNKNOWN",
+              "UNIT_UNKNOWN",
+              "RELATIONSHIPS_UNVERIFIED"
+            ],
+            "next_action": {
+              "kind": "data_check",
+              "text": "Verify the reported context and its timing against authorized station records.",
+              "basis_evidence_ids": [
+                "E-0123456789abcdef0123456789abcdef-7",
+                "E-0123456789abcdef0123456789abcdef-1"
+              ]
+            }
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "list_stations",
+      "method": "GET",
+      "path": "/api/v1/stations?q=SYNTHETIC&limit=20",
+      "http_status": 200,
+      "request": {
+        "model": "StationsRequest",
+        "body": {
+          "q": "SYNTHETIC",
+          "limit": 20
+        }
+      },
+      "response": {
+        "model": "ListStationsResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-11",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "ok",
+          "case_id": null,
+          "data": {
+            "stations": [
+              {
+                "station_number": "SYNTHETIC-STATION",
+                "record_count": 3
+              }
+            ]
+          },
+          "error": null
+        }
+      }
+    },
+    {
+      "name": "error_INVALID_SCOPE",
+      "method": "POST",
+      "path": "/api/v1/cases",
+      "http_status": 422,
+      "response": {
+        "model": "ErrorResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-12",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "error",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": null,
+          "error": {
+            "code": "INVALID_SCOPE",
+            "message": "Request does not match the agreed scope.",
+            "scope": null
+          }
+        }
+      }
+    },
+    {
+      "name": "error_NO_DATA",
+      "method": "POST",
+      "path": "/api/v1/cases",
+      "http_status": 404,
+      "response": {
+        "model": "ErrorResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-13",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "error",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": null,
+          "error": {
+            "code": "NO_DATA",
+            "message": "No measurements for the exact scope in error.scope.",
+            "scope": {
+              "station_number": "SYNTHETIC-STATION",
+              "from": "2026-11-10T10:00:00",
+              "to": "2026-11-10T11:00:00",
+              "serial_number": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "error_SOURCE_UNAVAILABLE",
+      "method": "POST",
+      "path": "/api/v1/cases",
+      "http_status": 503,
+      "response": {
+        "model": "ErrorResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-14",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "error",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": null,
+          "error": {
+            "code": "SOURCE_UNAVAILABLE",
+            "message": "Oracle source is unavailable.",
+            "scope": null
+          }
+        }
+      }
+    },
+    {
+      "name": "error_TIMEOUT",
+      "method": "POST",
+      "path": "/api/v1/cases",
+      "http_status": 504,
+      "response": {
+        "model": "ErrorResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-15",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "error",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": null,
+          "error": {
+            "code": "TIMEOUT",
+            "message": "Source query timed out.",
+            "scope": null
+          }
+        }
+      }
+    },
+    {
+      "name": "error_EVIDENCE_NOT_FOUND",
+      "method": "GET",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/evidence/E-0123456789abcdef0123456789abcdef-999",
+      "http_status": 404,
+      "response": {
+        "model": "ErrorResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-16",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "error",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": null,
+          "error": {
+            "code": "EVIDENCE_NOT_FOUND",
+            "message": "Evidence is not present in this case.",
+            "scope": null
+          }
+        }
+      },
+      "request": {
+        "model": "EvidenceRequest",
+        "body": {
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "evidence_id": "E-0123456789abcdef0123456789abcdef-999"
+        }
+      }
+    },
+    {
+      "name": "error_EVIDENCE_NOT_IN_CASE",
+      "method": "GET",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/evidence/E-ffffffffffffffffffffffffffffffff-1",
+      "http_status": 404,
+      "response": {
+        "model": "ErrorResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-17",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "error",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": null,
+          "error": {
+            "code": "EVIDENCE_NOT_IN_CASE",
+            "message": "Evidence belongs to another case.",
+            "scope": null
+          }
+        }
+      },
+      "request": {
+        "model": "EvidenceRequest",
+        "body": {
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "evidence_id": "E-ffffffffffffffffffffffffffffffff-1"
+        }
+      }
+    },
+    {
+      "name": "error_CASE_NOT_FOUND_OR_EXPIRED",
+      "method": "GET",
+      "path": "/api/v1/cases/ffffffffffffffffffffffffffffffff/handover",
+      "http_status": 404,
+      "response": {
+        "model": "ErrorResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-18",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "error",
+          "case_id": "ffffffffffffffffffffffffffffffff",
+          "data": null,
+          "error": {
+            "code": "CASE_NOT_FOUND_OR_EXPIRED",
+            "message": "Case is unavailable; open a new case.",
+            "scope": null
+          }
+        }
+      },
+      "request": {
+        "model": "CaseRequest",
+        "body": {
+          "case_id": "ffffffffffffffffffffffffffffffff"
+        }
+      }
+    },
+    {
+      "name": "error_UNAUTHORIZED",
+      "method": "POST",
+      "path": "/api/v1/cases",
+      "http_status": 401,
+      "response": {
+        "model": "ErrorResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-19",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "error",
+          "case_id": null,
+          "data": null,
+          "error": {
+            "code": "UNAUTHORIZED",
+            "message": "Valid connector credentials are required.",
+            "scope": null
+          }
+        }
+      }
+    },
+    {
+      "name": "error_NOT_COMPARABLE",
+      "method": "POST",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/comparisons",
+      "http_status": 422,
+      "response": {
+        "model": "ErrorResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-20",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "error",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": null,
+          "error": {
+            "code": "NOT_COMPARABLE",
+            "message": "P1 comparison refused: recorded units are incompatible.",
+            "scope": null
+          }
+        }
+      }
+    },
+    {
+      "name": "error_stale_question",
+      "method": "POST",
+      "path": "/api/v1/cases/0123456789abcdef0123456789abcdef/answers",
+      "http_status": 409,
+      "response": {
+        "model": "ErrorResponse",
+        "body": {
+          "request_id": "SYNTHETIC-REQUEST-21",
+          "retrieved_at": "2026-11-10T12:00:00Z",
+          "status": "error",
+          "case_id": "0123456789abcdef0123456789abcdef",
+          "data": null,
+          "error": {
+            "code": "INVALID_SCOPE",
+            "message": "Question is stale, answered, or belongs to another case.",
+            "scope": null
+          }
+        }
+      }
+    }
+  ]
+}

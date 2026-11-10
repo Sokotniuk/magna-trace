@@ -1,0 +1,1490 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "CaseRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "case_id": {
+          "pattern": "^[0-9a-f]{32}$",
+          "title": "Case Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "case_id"
+      ],
+      "title": "CaseRequest",
+      "type": "object"
+    },
+    "EvidenceRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "case_id": {
+          "pattern": "^[0-9a-f]{32}$",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "evidence_id": {
+          "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+          "title": "Evidence Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "case_id",
+        "evidence_id"
+      ],
+      "title": "EvidenceRequest",
+      "type": "object"
+    },
+    "OpenCaseRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "station_number": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Station Number",
+          "type": "string"
+        },
+        "from": {
+          "anyOf": [
+            {
+              "maxLength": 40,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From"
+        },
+        "to": {
+          "anyOf": [
+            {
+              "maxLength": 40,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "To"
+        },
+        "serial_number": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Serial Number"
+        }
+      },
+      "required": [
+        "station_number"
+      ],
+      "title": "OpenCaseRequest",
+      "type": "object"
+    },
+    "RecordAnswerRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "question_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Question Id",
+          "type": "string"
+        },
+        "answer_text": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Answer Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "question_id",
+        "answer_text"
+      ],
+      "title": "RecordAnswerRequest",
+      "type": "object"
+    },
+    "StationsRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "q": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Q"
+        },
+        "limit": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "StationsRequest",
+      "type": "object"
+    },
+    "AnswerSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        },
+        "observations_retrieved_at": {
+          "format": "date-time",
+          "title": "Observations Retrieved At",
+          "type": "string"
+        },
+        "findings": {
+          "items": {
+            "$ref": "#/$defs/Finding"
+          },
+          "maxItems": 5,
+          "title": "Findings",
+          "type": "array"
+        },
+        "additional_evidence_ids": {
+          "items": {
+            "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+            "type": "string"
+          },
+          "title": "Additional Evidence Ids",
+          "type": "array"
+        },
+        "technician_reports": {
+          "items": {
+            "$ref": "#/$defs/Report"
+          },
+          "title": "Technician Reports",
+          "type": "array"
+        },
+        "assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "next_action": {
+          "discriminator": {
+            "mapping": {
+              "data_check": "#/$defs/Check",
+              "escalation": "#/$defs/Escalation",
+              "question": "#/$defs/Question"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Question"
+            },
+            {
+              "$ref": "#/$defs/Check"
+            },
+            {
+              "$ref": "#/$defs/Escalation"
+            }
+          ],
+          "title": "Next Action"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        },
+        "report_evidence_id": {
+          "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+          "title": "Report Evidence Id",
+          "type": "string"
+        },
+        "change_summary": {
+          "title": "Change Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scope",
+        "observations_retrieved_at",
+        "findings",
+        "additional_evidence_ids",
+        "technician_reports",
+        "assessment",
+        "next_action",
+        "warnings",
+        "report_evidence_id",
+        "change_summary"
+      ],
+      "title": "AnswerSnapshot",
+      "type": "object"
+    },
+    "Assessment": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "const": "UNDETERMINED",
+          "default": "UNDETERMINED",
+          "title": "Label",
+          "type": "string"
+        },
+        "hypotheses": {
+          "items": {
+            "$ref": "#/$defs/Hypothesis"
+          },
+          "title": "Hypotheses",
+          "type": "array"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unknowns",
+          "type": "array"
+        }
+      },
+      "required": [
+        "hypotheses",
+        "unknowns"
+      ],
+      "title": "Assessment",
+      "type": "object"
+    },
+    "CalculatedEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "classification": {
+          "const": "CALCULATED",
+          "default": "CALCULATED",
+          "title": "Classification",
+          "type": "string"
+        },
+        "input_evidence_ids": {
+          "items": {
+            "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+            "type": "string"
+          },
+          "title": "Input Evidence Ids",
+          "type": "array"
+        },
+        "rule": {
+          "title": "Rule",
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/$defs/CalculationResult"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "input_evidence_ids",
+        "rule",
+        "result",
+        "retrieved_at"
+      ],
+      "title": "CalculatedEvidence",
+      "type": "object"
+    },
+    "CalculationResult": {
+      "additionalProperties": false,
+      "properties": {
+        "parsed_value": {
+          "anyOf": [
+            {
+              "pattern": "^[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Parsed Value"
+        },
+        "deviation": {
+          "anyOf": [
+            {
+              "ge": 0,
+              "pattern": "^[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Deviation"
+        },
+        "range_status": {
+          "enum": [
+            "ABOVE",
+            "BELOW",
+            "WITHIN_RECORDED_BOUNDS",
+            "NOT_EVALUABLE"
+          ],
+          "title": "Range Status",
+          "type": "string"
+        },
+        "quality_flags": {
+          "items": {
+            "enum": [
+              "MISSING",
+              "UNPARSEABLE",
+              "LIMIT_UNKNOWN",
+              "LIMIT_INVALID",
+              "PARTIAL_BOUNDS",
+              "UNIT_UNKNOWN",
+              "SEMANTICS_UNKNOWN"
+            ],
+            "type": "string"
+          },
+          "title": "Quality Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "parsed_value",
+        "deviation",
+        "range_status",
+        "quality_flags"
+      ],
+      "title": "CalculationResult",
+      "type": "object"
+    },
+    "Check": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "data_check",
+          "default": "data_check",
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "basis_evidence_ids": {
+          "items": {
+            "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+            "type": "string"
+          },
+          "title": "Basis Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "text",
+        "basis_evidence_ids"
+      ],
+      "title": "Check",
+      "type": "object"
+    },
+    "ErrorInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "INVALID_SCOPE",
+            "NO_DATA",
+            "SOURCE_UNAVAILABLE",
+            "TIMEOUT",
+            "EVIDENCE_NOT_FOUND",
+            "EVIDENCE_NOT_IN_CASE",
+            "NOT_COMPARABLE",
+            "CASE_NOT_FOUND_OR_EXPIRED",
+            "UNAUTHORIZED"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OpenCaseRequest"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ErrorInfo",
+      "type": "object"
+    },
+    "ErrorResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "status": {
+          "const": "error",
+          "default": "error",
+          "title": "Status",
+          "type": "string"
+        },
+        "case_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{32}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Case Id"
+        },
+        "data": {
+          "default": null,
+          "title": "Data",
+          "type": "null"
+        },
+        "error": {
+          "$ref": "#/$defs/ErrorInfo"
+        }
+      },
+      "required": [
+        "request_id",
+        "retrieved_at",
+        "case_id",
+        "error"
+      ],
+      "title": "ErrorResponse",
+      "type": "object"
+    },
+    "Escalation": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "escalation",
+          "default": "escalation",
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "basis_evidence_ids": {
+          "items": {
+            "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+            "type": "string"
+          },
+          "title": "Basis Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "text",
+        "basis_evidence_ids"
+      ],
+      "title": "Escalation",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "measurement": {
+          "title": "Measurement",
+          "type": "string"
+        },
+        "raw_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Raw Value"
+        },
+        "raw_lower": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Raw Lower"
+        },
+        "raw_upper": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Raw Upper"
+        },
+        "parsed_value": {
+          "anyOf": [
+            {
+              "pattern": "^[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Parsed Value"
+        },
+        "deviation": {
+          "anyOf": [
+            {
+              "ge": 0,
+              "pattern": "^[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Deviation"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unit"
+        },
+        "range_status": {
+          "enum": [
+            "ABOVE",
+            "BELOW",
+            "WITHIN_RECORDED_BOUNDS",
+            "NOT_EVALUABLE"
+          ],
+          "title": "Range Status",
+          "type": "string"
+        },
+        "quality_flags": {
+          "items": {
+            "enum": [
+              "MISSING",
+              "UNPARSEABLE",
+              "LIMIT_UNKNOWN",
+              "LIMIT_INVALID",
+              "PARTIAL_BOUNDS",
+              "UNIT_UNKNOWN",
+              "SEMANTICS_UNKNOWN"
+            ],
+            "type": "string"
+          },
+          "title": "Quality Flags",
+          "type": "array"
+        },
+        "raw_fail_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Raw Fail Code"
+        },
+        "evidence_id": {
+          "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "calculation_evidence_id": {
+          "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+          "title": "Calculation Evidence Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "measurement",
+        "raw_value",
+        "raw_lower",
+        "raw_upper",
+        "parsed_value",
+        "deviation",
+        "unit",
+        "range_status",
+        "quality_flags",
+        "raw_fail_code",
+        "evidence_id",
+        "calculation_evidence_id"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "GetEvidenceResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "status": {
+          "const": "ok",
+          "default": "ok",
+          "title": "Status",
+          "type": "string"
+        },
+        "case_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{32}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Case Id"
+        },
+        "data": {
+          "discriminator": {
+            "mapping": {
+              "CALCULATED": "#/$defs/CalculatedEvidence",
+              "OBSERVED": "#/$defs/ObservedEvidence",
+              "TECHNICIAN_REPORTED": "#/$defs/Report"
+            },
+            "propertyName": "classification"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ObservedEvidence"
+            },
+            {
+              "$ref": "#/$defs/CalculatedEvidence"
+            },
+            {
+              "$ref": "#/$defs/Report"
+            }
+          ],
+          "title": "Data"
+        },
+        "error": {
+          "default": null,
+          "title": "Error",
+          "type": "null"
+        }
+      },
+      "required": [
+        "request_id",
+        "retrieved_at",
+        "case_id",
+        "data"
+      ],
+      "title": "GetEvidenceResponse",
+      "type": "object"
+    },
+    "GetHandoverResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "status": {
+          "const": "ok",
+          "default": "ok",
+          "title": "Status",
+          "type": "string"
+        },
+        "case_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{32}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Case Id"
+        },
+        "data": {
+          "$ref": "#/$defs/Handover"
+        },
+        "error": {
+          "default": null,
+          "title": "Error",
+          "type": "null"
+        }
+      },
+      "required": [
+        "request_id",
+        "retrieved_at",
+        "case_id",
+        "data"
+      ],
+      "title": "GetHandoverResponse",
+      "type": "object"
+    },
+    "Handover": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        },
+        "observations_retrieved_at": {
+          "format": "date-time",
+          "title": "Observations Retrieved At",
+          "type": "string"
+        },
+        "observations": {
+          "items": {
+            "$ref": "#/$defs/Finding"
+          },
+          "title": "Observations",
+          "type": "array"
+        },
+        "additional_evidence_ids": {
+          "items": {
+            "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+            "type": "string"
+          },
+          "title": "Additional Evidence Ids",
+          "type": "array"
+        },
+        "technician_reports": {
+          "items": {
+            "$ref": "#/$defs/Report"
+          },
+          "title": "Technician Reports",
+          "type": "array"
+        },
+        "assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "open_questions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Open Questions",
+          "type": "array"
+        },
+        "gaps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Gaps",
+          "type": "array"
+        },
+        "next_action": {
+          "discriminator": {
+            "mapping": {
+              "data_check": "#/$defs/Check",
+              "escalation": "#/$defs/Escalation",
+              "question": "#/$defs/Question"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Question"
+            },
+            {
+              "$ref": "#/$defs/Check"
+            },
+            {
+              "$ref": "#/$defs/Escalation"
+            }
+          ],
+          "title": "Next Action"
+        }
+      },
+      "required": [
+        "scope",
+        "observations_retrieved_at",
+        "observations",
+        "additional_evidence_ids",
+        "technician_reports",
+        "assessment",
+        "open_questions",
+        "gaps",
+        "next_action"
+      ],
+      "title": "Handover",
+      "type": "object"
+    },
+    "Hypothesis": {
+      "additionalProperties": false,
+      "properties": {
+        "classification": {
+          "const": "HYPOTHESIS",
+          "default": "HYPOTHESIS",
+          "title": "Classification",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "supporting_evidence_ids": {
+          "items": {
+            "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+            "type": "string"
+          },
+          "title": "Supporting Evidence Ids",
+          "type": "array"
+        },
+        "counterevidence_ids": {
+          "items": {
+            "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+            "type": "string"
+          },
+          "title": "Counterevidence Ids",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Limitations",
+          "type": "array"
+        },
+        "distinguishing_evidence": {
+          "title": "Distinguishing Evidence",
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "supporting_evidence_ids",
+        "counterevidence_ids",
+        "limitations",
+        "distinguishing_evidence"
+      ],
+      "title": "Hypothesis",
+      "type": "object"
+    },
+    "ListStationsResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "status": {
+          "const": "ok",
+          "default": "ok",
+          "title": "Status",
+          "type": "string"
+        },
+        "case_id": {
+          "default": null,
+          "title": "Case Id",
+          "type": "null"
+        },
+        "data": {
+          "$ref": "#/$defs/Stations"
+        },
+        "error": {
+          "default": null,
+          "title": "Error",
+          "type": "null"
+        }
+      },
+      "required": [
+        "request_id",
+        "retrieved_at",
+        "data"
+      ],
+      "title": "ListStationsResponse",
+      "type": "object"
+    },
+    "ObservedEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "classification": {
+          "const": "OBSERVED",
+          "default": "OBSERVED",
+          "title": "Classification",
+          "type": "string"
+        },
+        "source_table": {
+          "const": "HACKATON.SNO_MEASUREMENT_DATA",
+          "title": "Source Table",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/OpenCaseRequest"
+        },
+        "measurement": {
+          "title": "Measurement",
+          "type": "string"
+        },
+        "raw_fields": {
+          "$ref": "#/$defs/RawFields"
+        },
+        "row_ordinal": {
+          "minimum": 1,
+          "title": "Row Ordinal",
+          "type": "integer"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "source_table",
+        "scope",
+        "measurement",
+        "raw_fields",
+        "row_ordinal",
+        "retrieved_at"
+      ],
+      "title": "ObservedEvidence",
+      "type": "object"
+    },
+    "OpenCaseResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "status": {
+          "const": "ok",
+          "default": "ok",
+          "title": "Status",
+          "type": "string"
+        },
+        "case_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{32}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Case Id"
+        },
+        "data": {
+          "$ref": "#/$defs/Snapshot"
+        },
+        "error": {
+          "default": null,
+          "title": "Error",
+          "type": "null"
+        }
+      },
+      "required": [
+        "request_id",
+        "retrieved_at",
+        "case_id",
+        "data"
+      ],
+      "title": "OpenCaseResponse",
+      "type": "object"
+    },
+    "Question": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "question",
+          "default": "question",
+          "title": "Kind",
+          "type": "string"
+        },
+        "question_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Question Id",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "basis_evidence_ids": {
+          "items": {
+            "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+            "type": "string"
+          },
+          "title": "Basis Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "question_id",
+        "text",
+        "basis_evidence_ids"
+      ],
+      "title": "Question",
+      "type": "object"
+    },
+    "RawFields": {
+      "additionalProperties": false,
+      "properties": {
+        "MEASURE_VALUE": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Measure Value"
+        },
+        "LOWER_LIMIT": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Lower Limit"
+        },
+        "UPPER_LIMIT": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Upper Limit"
+        },
+        "UNIT": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unit"
+        },
+        "MEASURE_FAIL_CODE": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Measure Fail Code"
+        },
+        "station_number": {
+          "title": "Station Number",
+          "type": "string"
+        },
+        "serial_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Serial Number"
+        },
+        "BOOK_STAMP": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Book Stamp"
+        }
+      },
+      "required": [
+        "MEASURE_VALUE",
+        "LOWER_LIMIT",
+        "UPPER_LIMIT",
+        "UNIT",
+        "MEASURE_FAIL_CODE",
+        "station_number",
+        "serial_number",
+        "BOOK_STAMP"
+      ],
+      "title": "RawFields",
+      "type": "object"
+    },
+    "RecordAnswerResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "status": {
+          "const": "ok",
+          "default": "ok",
+          "title": "Status",
+          "type": "string"
+        },
+        "case_id": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{32}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Case Id"
+        },
+        "data": {
+          "$ref": "#/$defs/AnswerSnapshot"
+        },
+        "error": {
+          "default": null,
+          "title": "Error",
+          "type": "null"
+        }
+      },
+      "required": [
+        "request_id",
+        "retrieved_at",
+        "case_id",
+        "data"
+      ],
+      "title": "RecordAnswerResponse",
+      "type": "object"
+    },
+    "Report": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "classification": {
+          "const": "TECHNICIAN_REPORTED",
+          "default": "TECHNICIAN_REPORTED",
+          "title": "Classification",
+          "type": "string"
+        },
+        "question_id": {
+          "title": "Question Id",
+          "type": "string"
+        },
+        "answer_text": {
+          "title": "Answer Text",
+          "type": "string"
+        },
+        "reported_at": {
+          "format": "date-time",
+          "title": "Reported At",
+          "type": "string"
+        },
+        "attribution": {
+          "title": "Attribution",
+          "type": "string"
+        },
+        "conflict_evidence_ids": {
+          "items": {
+            "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+            "type": "string"
+          },
+          "title": "Conflict Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "question_id",
+        "answer_text",
+        "reported_at",
+        "attribution",
+        "conflict_evidence_ids"
+      ],
+      "title": "Report",
+      "type": "object"
+    },
+    "Scope": {
+      "additionalProperties": false,
+      "properties": {
+        "station_number": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Station Number",
+          "type": "string"
+        },
+        "from": {
+          "anyOf": [
+            {
+              "maxLength": 40,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From"
+        },
+        "to": {
+          "anyOf": [
+            {
+              "maxLength": 40,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "To"
+        },
+        "serial_number": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Serial Number"
+        },
+        "row_count": {
+          "minimum": 0,
+          "title": "Row Count",
+          "type": "integer"
+        },
+        "captured_row_count": {
+          "minimum": 0,
+          "title": "Captured Row Count",
+          "type": "integer"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "coverage_warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Coverage Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "station_number",
+        "row_count",
+        "captured_row_count",
+        "truncated",
+        "coverage_warnings"
+      ],
+      "title": "Scope",
+      "type": "object"
+    },
+    "Snapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        },
+        "observations_retrieved_at": {
+          "format": "date-time",
+          "title": "Observations Retrieved At",
+          "type": "string"
+        },
+        "findings": {
+          "items": {
+            "$ref": "#/$defs/Finding"
+          },
+          "maxItems": 5,
+          "title": "Findings",
+          "type": "array"
+        },
+        "additional_evidence_ids": {
+          "items": {
+            "pattern": "^E-[0-9a-f]{32}-[1-9][0-9]*$",
+            "type": "string"
+          },
+          "title": "Additional Evidence Ids",
+          "type": "array"
+        },
+        "technician_reports": {
+          "items": {
+            "$ref": "#/$defs/Report"
+          },
+          "title": "Technician Reports",
+          "type": "array"
+        },
+        "assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "next_action": {
+          "discriminator": {
+            "mapping": {
+              "data_check": "#/$defs/Check",
+              "escalation": "#/$defs/Escalation",
+              "question": "#/$defs/Question"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Question"
+            },
+            {
+              "$ref": "#/$defs/Check"
+            },
+            {
+              "$ref": "#/$defs/Escalation"
+            }
+          ],
+          "title": "Next Action"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "scope",
+        "observations_retrieved_at",
+        "findings",
+        "additional_evidence_ids",
+        "technician_reports",
+        "assessment",
+        "next_action",
+        "warnings"
+      ],
+      "title": "Snapshot",
+      "type": "object"
+    },
+    "Station": {
+      "additionalProperties": false,
+      "properties": {
+        "station_number": {
+          "title": "Station Number",
+          "type": "string"
+        },
+        "record_count": {
+          "minimum": 0,
+          "title": "Record Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "station_number",
+        "record_count"
+      ],
+      "title": "Station",
+      "type": "object"
+    },
+    "Stations": {
+      "additionalProperties": false,
+      "properties": {
+        "stations": {
+          "items": {
+            "$ref": "#/$defs/Station"
+          },
+          "title": "Stations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "stations"
+      ],
+      "title": "Stations",
+      "type": "object"
+    }
+  }
+}
