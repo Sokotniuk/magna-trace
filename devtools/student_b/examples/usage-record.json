@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "selection": {"provider": "SYNTHETIC_PROVIDER", "model": "SYNTHETIC_MODEL", "endpoint_alias": "synthetic-local-example"},
+  "limits": {"max_steps": 2, "max_elapsed_ms": 60000, "soft_cost_usd": "0.05"},
+  "elapsed_ms": 1000,
+  "steps": [{"step_id": "synthetic-1", "provider": "SYNTHETIC_PROVIDER", "model": "SYNTHETIC_MODEL", "endpoint_alias": "synthetic-local-example", "input_tokens": 100, "output_tokens": 20, "cost_usd": "0.01", "cost_provenance": "estimate", "price_source": "Synthetic example only; not a provider price"}]
+}

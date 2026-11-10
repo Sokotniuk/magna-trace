@@ -75,12 +75,25 @@ class CaseStore:
             item = self._items.get(case_id)
             if item is None:
                 raise Failure("CASE_NOT_FOUND_OR_EXPIRED", "Case is unavailable; open a new case", 404)
-            item.lock.acquire()
-            if item.expires_at <= self.clock():
-                del self._items[case_id]
-                item.lock.release()
-                raise Failure("CASE_NOT_FOUND_OR_EXPIRED", "Case is unavailable; open a new case", 404)
+        # A busy case must not hold the registry lock and block unrelated cases.
+        item.lock.acquire()
         try:
+            with self._guard:
+                # Expiry cleanup may have removed this object while we waited.
+                if self._items.get(case_id) is not item or item.expires_at <= self.clock():
+                    if self._items.get(case_id) is item:
+                        del self._items[case_id]
+                    raise Failure("CASE_NOT_FOUND_OR_EXPIRED", "Case is unavailable; open a new case", 404)
             yield item
         finally:
             item.lock.release()
+
+    def mark_failed(self, case_id: str, *, no_data: bool) -> None:
+        """Retain terminal state if still live; never mask the original source error."""
+        try:
+            with self.locked(case_id) as case:
+                if case.state == "OPENED":
+                    case.transition("NO_DATA" if no_data else "SOURCE_ERROR")
+        except Failure as error:
+            if error.code != "CASE_NOT_FOUND_OR_EXPIRED":
+                raise

@@ -9,6 +9,7 @@ from backend.app import schemas as s
 from . import diagnostics
 from .answers import record_answer as save_answer
 from .cases import utc_now
+from .evidence import EvidenceStore
 from .source import Failure
 
 
@@ -24,7 +25,11 @@ def read_count(request: Request) -> int:
 
 
 def make_router(authenticate: Callable, development_routes: bool) -> APIRouter:
-    router = APIRouter(prefix="/api/v1", dependencies=[Depends(authenticate)])
+    router = APIRouter(
+        prefix="/api/v1", dependencies=[Depends(authenticate)],
+        responses={status: {"model": s.ErrorResponse} for status in
+                   (401, 404, 409, 413, 422, 429, 500, 503, 504)},
+    )
 
     @router.post("/cases", operation_id="open_case", response_model=s.OpenCaseResponse)
     def open_case(body: s.OpenCaseRequest, request: Request):
@@ -43,17 +48,19 @@ def make_router(authenticate: Callable, development_routes: bool) -> APIRouter:
                     raise Failure("SOURCE_UNAVAILABLE", "Source returned rows outside the requested scope")
             retrieved_at = utc_now()
             with store.locked(case.case_id) as current:
-                findings = tuple(current.evidence.capture(body, row, i, retrieved_at) for i, row in enumerate(batch.rows, 1))
-                current.transition("EVIDENCE_LOADED")
-                current.question_id = uuid4().hex
+                # Publish evidence only after the complete snapshot validates.
+                captured = EvidenceStore(case.case_id)
+                findings = tuple(captured.capture(body, row, i, retrieved_at) for i, row in enumerate(batch.rows, 1))
+                question_id = uuid4().hex
                 scope = s.Scope(**body.model_dump(), row_count=batch.total_rows, captured_row_count=len(batch.rows), truncated=batch.truncated, coverage_warnings=batch.coverage_warnings)
-                current.snapshot = diagnostics.snapshot(scope, findings, current.question_id, retrieved_at)
+                result = diagnostics.snapshot(scope, findings, question_id, retrieved_at)
+                current.evidence = captured
+                current.question_id = question_id
+                current.snapshot = result
+                current.transition("EVIDENCE_LOADED")
                 current.transition("AWAITING_CLARIFICATION")
-                result = current.snapshot
         except Exception as error:
-            with store.locked(case.case_id) as failed:
-                if failed.state == "OPENED":
-                    failed.transition("NO_DATA" if isinstance(error, Failure) and error.code == "NO_DATA" else "SOURCE_ERROR")
+            store.mark_failed(case.case_id, no_data=isinstance(error, Failure) and error.code == "NO_DATA")
             raise
         return ok(request, result, case.case_id)
 

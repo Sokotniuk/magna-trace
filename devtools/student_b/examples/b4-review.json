@@ -1,0 +1,11 @@
+{
+  "identifier": "B4-local-review",
+  "branch": "feature/student-b-local-ready",
+  "scope": ["student_b/cases.py", "student_b/tests/test_lifecycle.py"],
+  "sources": ["AGENTS.md", "plan.md", "architecture.md", "product.md", "decisions.md", "student_b/LOCAL_DOD.md"],
+  "checks": ["python -m pytest student_b/tests/test_lifecycle.py -q", "python -m student_b.verify"],
+  "must_do": ["Review isolation and absolute TTL for B4.", "Preserve the original source error if the case expires during I/O.", "Report checked behavior and remaining live dependencies."],
+  "must_not": ["Do not edit A/C/D files or frozen B2.", "Do not add SQL, a model call, persistence or comparisons.", "Do not claim live integration from synthetic tests."],
+  "acceptance": ["A busy case does not block other cases.", "Expired cases cannot be revived.", "Existing B regression checks pass."],
+  "stop_rule": "Stop after review and checks; change code only for a reproduced B4 defect. Request missing A/C interfaces instead of guessing."
+}
