@@ -1,0 +1,4 @@
+fastapi>=0.110
+uvicorn>=0.29
+oracledb>=2.0
+mcp>=1.9,<2  # code uses the v1 API (FastMCP); v2 renamed it
