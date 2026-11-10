@@ -1,7 +1,8 @@
-# MAGNA TRACE frontend — D1.2
+# MAGNA TRACE frontend — D2
 
-Local Vite dashboard scaffold and **SYNTHETIC ONLY** B2 fixture replay server.
-The screen remains the D1.1 placeholder; D2/D3 and real backend integration are not implemented.
+Local Vite dashboard and **SYNTHETIC ONLY** B2 fixture replay server.
+D2 provides station selection, case opening and a findings table. Evidence
+drill-down (D3), live backend integration (D4) and P1 features are not implemented.
 
 ## Pinned contract
 
@@ -47,6 +48,30 @@ listens on `127.0.0.1:8001`; `TRACE_MOCK_PORT` can change its port. Update
 The Vite configuration also supports server-only `.env.local` values; the mock
 reads shell environment variables, so export the key for both processes.
 `.env` and `.env.*` are ignored.
+
+## D2 dashboard
+
+The station selector loads `list_stations` through the Vite proxy. Choose
+`SYNTHETIC-STATION`, then select **Open diagnostic case**. The request uses the
+exact pinned replay scope shown on screen; `src/demo-scope.json` contains only
+the request's from/to/serial fields, verified against the pinned fixture by the
+UI test. No response fixtures are imported into React or used as error fallbacks.
+
+The table displays measurement, raw value/unit/bounds, returned deviation, range
+status, quality flags and raw fail code in separate columns. Plain evidence IDs
+provide references only; no evidence fetch or drill-down is implemented. Raw
+strings retain their precision/whitespace; null is visibly rendered as `null`.
+ABOVE, BELOW, WITHIN_RECORDED_BOUNDS and NOT_EVALUABLE have distinct labels and
+styling; they are never derived from values or codes. In particular the pinned
+in-range Count row retains code `1001` without a pass/fail diagnosis.
+
+Warnings and source retrieval time are displayed as returned. Changing the
+station, reloading stations or opening another case clears prior findings.
+Errors show the returned code/message and exact queried scope when supplied;
+network, non-JSON and unexpected responses produce a technical error without
+substitute findings. Loading disables duplicate submissions. D2 accepts only
+responses labeled `X-Trace-Mock: SYNTHETIC`, so a live backend cannot silently be
+presented as mock data. Live integration remains D4 work.
 
 React requests must use relative `/api/v1/...` URLs without credentials. Vite
 reads `TRACE_API_KEY` only in Node and overwrites `X-API-Key` on every proxied
@@ -106,6 +131,7 @@ Code `1001` and null have unknown semantics and never establish PASS/FAIL.
 ```bash
 npm run build
 npm run test:mock
+npm run test:dashboard
 ```
 
 The smoke test invokes `npm run build` with a random server-only key, starts an
@@ -117,8 +143,19 @@ codes, Decimal string/null rules and scientific notation in the pinned schema.
 It searches React sources, served app content and `dist/` for the random key.
 The servers are closed after testing. No new packages are required.
 
+`test:dashboard` uses the installed Firefox in headless mode with an isolated
+ignored profile under `node_modules/.cache/`, plus Node's built-in WebSocket.
+It starts the actual mock and Vite servers, selects the station and opens the
+case in the browser, compares every displayed value with the pinned fixture,
+checks independent code/status/flags and warnings, then exercises NO_DATA,
+SOURCE_UNAVAILABLE, TIMEOUT, INVALID_SCOPE and station-list 401 errors. It also
+checks all four status labels and exact whitespace/scientific-notation rendering
+with render-only synthetic inputs, without changing any API fixtures. No
+additional test dependency is installed. Firefox must be available on PATH.
+
 Remaining dependencies: final B2 freeze and A/C confirmations, open D12 scope and
 configuration details, B's authenticated backend and A's Oracle/analysis modules.
 These local synthetic checks do not verify Oracle, Copilot, integration gates or
-production deployment. The next D1 step must follow the agreed frozen contract;
-no D2, D3 or P1 implementation is included here.
+production deployment. D2 is complete against the pinned candidate only; D3/D4
+and P1 work remain outside this change. Future work must follow the agreed
+contract when the team freezes B2.
