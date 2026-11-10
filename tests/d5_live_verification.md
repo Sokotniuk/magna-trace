@@ -1,4 +1,22 @@
-# D5 — Local FastAPI and Oracle smoke verification
+# D5 verification
+
+Independent A4 verification is complete. **D5 VERIFIED and ACCEPTED.**
+Full live API integration remains pending A2/A3.
+
+## Completed independent A4 verification
+
+Student D connected directly to Oracle `FREEPDB1` as `TRACE_D4_RO`.
+
+| Check | Observed result | Status |
+| --- | --- | --- |
+| A4-01 | `ST3003` count was 60. | PASS |
+| A4-02 | Coded Screw Count lookup succeeded. | PASS |
+| Angle | 9 source fields matched. `ABOVE` 7.592. | PASS |
+| Vibration | 9 source fields matched. `ABOVE` 0.354. | PASS |
+| Position Accuracy | 9 source fields matched. `ABOVE` 0.292. | PASS |
+| Screw Count | 9 source fields matched. `WITHIN_RECORDED_BOUNDS`, deviation 0. | PASS |
+
+## Live FastAPI and Oracle smoke verification
 
 Scope: the available B1 health, readiness and aggregate echo paths, missing-key
 rejection, and the B2 station response through Vite. See [plan D5](../docs/plan.md),
@@ -88,11 +106,21 @@ validation. Those checks do not count as live results. The runner's help and
 `git diff --check` were also checked. No dependencies, service changes,
 commits or pushes were made.
 
-Next D5 action: rerun with Vite targeting the live backend, then repeat after
-the A2/B station adapter handoff. Keep the O01–O03 SQL-to-API comparison and
-Copilot verification separate from this smoke test.
+## Live smoke run with a proxy credential mismatch
+
+Student D observed **PASSED=3, FAILED=2, PENDING=0** while the Vite proxy's
+server-side API key did not match FastAPI's configured key. Both proxied
+requests, `GET /api/v1/health/echo` and `GET /api/v1/stations`, returned HTTP 401.
+FastAPI health, Oracle readiness and direct missing-key rejection passed.
+
+The two failures came from the proxy's authentication configuration. The
+requests were rejected before they could check Oracle-backed operations, and
+the separate Oracle readiness check still passed.
 
 ## Live smoke rerun — 2026-11-10
+
+Student D reran the smoke test after restoring the matching server-side API key
+in the Vite proxy.
 
 Executed: `python3 tests/d5_live_smoke.py`
 
@@ -105,6 +133,6 @@ Executed: `python3 tests/d5_live_smoke.py`
 
 Summary: PASSED=4, FAILED=0, PENDING=1.
 
-The live Oracle aggregate connection is verified.
-Real station discovery, measurement analysis and evidence
-remain pending A2/A3 integration.
+The corrected run verified the live Oracle aggregate. The stations endpoint
+remained blocked by A2. Full live API integration, including station discovery,
+measurement analysis and evidence, remains pending A2/A3.
