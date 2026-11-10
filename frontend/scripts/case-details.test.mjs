@@ -29,7 +29,7 @@ test('D3 browser: case-local evidence and exact B2 handover', { timeout: 120000 
     if (oldTarget === undefined) delete process.env.TRACE_API_TARGET
     else process.env.TRACE_API_TARGET = oldTarget
   })
-  const vite = await createViteServer({ configFile: resolve('vite.config.mjs'), server: { host: '127.0.0.1', port: 0, strictPort: true } })
+  const vite = await createViteServer({ configFile: resolve('vite.config.mjs'), server: { host: '127.0.0.1', port: 0, strictPort: false } })
   t.after(() => vite.close())
   await vite.listen()
   const { command, context, evaluate, wait } = await browser(t)

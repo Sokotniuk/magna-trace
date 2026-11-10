@@ -30,7 +30,7 @@ test('D2 browser: select station, preserve findings, show warnings and errors', 
     if (oldTarget === undefined) delete process.env.TRACE_API_TARGET
     else process.env.TRACE_API_TARGET = oldTarget
   })
-  const vite = await createViteServer({ configFile: resolve('vite.config.mjs'), server: { host: '127.0.0.1', port: 0, strictPort: true } })
+  const vite = await createViteServer({ configFile: resolve('vite.config.mjs'), server: { host: '127.0.0.1', port: 0, strictPort: false } })
   t.after(() => vite.close())
   await vite.listen()
   const demoScope = JSON.parse(readFileSync(new URL('../src/demo-scope.json', import.meta.url), 'utf8'))

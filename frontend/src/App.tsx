@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { ApiError, listStations, openCase } from './api'
 import type { OpenedCase, Station } from './api'
 import demoScope from './demo-scope.json'
+import { apiLabel, isMockMode, sourceLabel } from './api-mode'
 import CaseDetails from './CaseDetails'
 export { FindingsTable } from './FindingsTable'
 
@@ -27,7 +28,7 @@ export default function App() {
       if (!controller.signal.aborted) setStations(items)
     }).catch((reason: unknown) => {
       if (!controller.signal.aborted) {
-        setError(reason instanceof ApiError ? reason : new ApiError('Could not reach the mock API. Check the local server and proxy.'))
+        setError(reason instanceof ApiError ? reason : new ApiError(`Could not reach the ${apiLabel}. Check the server and proxy.`))
       }
     }).finally(() => {
       if (!controller.signal.aborted) setLoadingStations(false)
@@ -44,7 +45,7 @@ export default function App() {
     try {
       setActiveCase(await openCase(selectedStation))
     } catch (reason: unknown) {
-      setError(reason instanceof ApiError ? reason : new ApiError('Could not reach the mock API. No findings loaded.'))
+      setError(reason instanceof ApiError ? reason : new ApiError(`Could not reach the ${apiLabel}. No findings loaded.`))
     } finally {
       setOpening(false)
     }
@@ -55,7 +56,9 @@ export default function App() {
       <header>
         <h1>MAGNA TRACE</h1>
         <h2>Diagnostic Dashboard</h2>
-        <p className="synthetic-banner">SYNTHETIC ONLY — pinned B2 candidate fixtures. Backend integration pending.</p>
+        <p className="synthetic-banner">{isMockMode
+          ? 'SYNTHETIC ONLY — pinned B2 candidate fixtures. Backend integration pending.'
+          : 'LIVE API mode — backend responses only. No mock fallback. Integration verification pending.'}</p>
       </header>
 
       <section aria-labelledby="station-heading">
@@ -75,8 +78,10 @@ export default function App() {
             <button type="button" className="secondary" disabled={loadingStations || opening} onClick={() => setReload((value) => value + 1)}>Reload stations</button>
           </div>
         </form>
-        <p className="scope-note">SYNTHETIC replay scope: <code>{demoScope.from}</code> to <code>{demoScope.to}</code>. Source timezone unknown.</p>
-        {loadingStations && <p role="status">Loading SYNTHETIC stations…</p>}
+        {isMockMode
+          ? <p className="scope-note">SYNTHETIC replay scope: <code>{demoScope.from}</code> to <code>{demoScope.to}</code>. Source timezone unknown.</p>
+          : <p className="scope-note">Live case scope: selected station; no time or serial filter supplied. Source timezone unknown.</p>}
+        {loadingStations && <p role="status">Loading {sourceLabel} stations…</p>}
         {!loadingStations && !error && stations.length === 0 && <p role="status">No stations returned. No case has been opened.</p>}
       </section>
 
@@ -88,7 +93,7 @@ export default function App() {
       </section>}
 
       {snapshot && <section aria-labelledby="findings-heading">
-        <h3 id="findings-heading">SYNTHETIC findings — {snapshot.scope.station_number}</h3>
+        <h3 id="findings-heading">{sourceLabel} findings — {snapshot.scope.station_number}</h3>
         <p>Observations retrieved at: <code>{snapshot.observations_retrieved_at}</code></p>
         <p className="scope-note">Range status, quality flags and raw fail code are independent. Code meanings are unknown; no quality certification is inferred. <code>null</code> denotes an absent API value.</p>
         <section className="warnings" aria-labelledby="warnings-heading">

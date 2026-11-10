@@ -65,7 +65,7 @@ test('SYNTHETIC B2 candidate: build, authenticated mock and Vite proxy', async (
   })
   const vite = await createViteServer({
     configFile: resolve('vite.config.mjs'),
-    server: { host: '127.0.0.1', port: 0, strictPort: true, open: false },
+    server: { host: '127.0.0.1', port: 0, strictPort: false, open: false },
   })
   t.after(() => vite.close())
   await vite.listen()

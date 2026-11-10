@@ -1,4 +1,5 @@
 import demoScope from './demo-scope.json'
+import { isMockMode } from './api-mode'
 
 export type Station = { station_number: string; record_count: number }
 export type Finding = {
@@ -94,15 +95,18 @@ function validFinding(finding: unknown): finding is Finding {
 
 async function request(path: string, init?: RequestInit) {
   const response = await fetch(path, init)
-  // The dashboard remains limited to the local SYNTHETIC mock, not a live backend.
-  if (response.headers.get('X-Trace-Mock') !== 'SYNTHETIC') {
+  const mockMarker = response.headers.get('X-Trace-Mock')
+  if (isMockMode && mockMarker !== 'SYNTHETIC') {
     throw new ApiError('Expected a SYNTHETIC mock response. Check the local server and Vite proxy.')
+  }
+  if (!isMockMode && mockMarker !== null) {
+    throw new ApiError('Live mode rejected a response marked as mock. Check the Vite proxy target. No data loaded for this request.')
   }
   let body: unknown
   try {
     body = await response.json()
   } catch {
-    throw new ApiError(`HTTP ${response.status}: the mock returned a non-JSON response. No data loaded for this request.`)
+    throw new ApiError(`HTTP ${response.status}: the ${isMockMode ? 'mock' : 'API'} returned a non-JSON response. No data loaded for this request.`)
   }
   if (!object(body)) throw new ApiError('Unexpected response format. No data loaded for this request.')
   if (!response.ok || body.status === 'error') {
@@ -119,7 +123,7 @@ async function request(path: string, init?: RequestInit) {
 }
 
 export async function listStations(signal?: AbortSignal): Promise<Station[]> {
-  const body = await request('/api/v1/stations?q=SYNTHETIC&limit=20', { signal })
+  const body = await request(isMockMode ? '/api/v1/stations?q=SYNTHETIC&limit=20' : '/api/v1/stations', { signal })
   if (body.case_id !== null || !object(body.data) || !Array.isArray(body.data.stations) ||
       !body.data.stations.every((station) => object(station) &&
         typeof station.station_number === 'string' && typeof station.record_count === 'number')) {
@@ -132,7 +136,7 @@ export async function openCase(stationNumber: string): Promise<OpenedCase> {
   const body = await request('/api/v1/cases', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ station_number: stationNumber, ...demoScope }),
+    body: JSON.stringify(isMockMode ? { station_number: stationNumber, ...demoScope } : { station_number: stationNumber }),
   })
   const snapshot = body.data
   if (!object(snapshot) || typeof body.case_id !== 'string' ||

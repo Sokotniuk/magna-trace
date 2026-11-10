@@ -1,4 +1,5 @@
 import type { Finding } from './api'
+import { sourceLabel } from './api-mode'
 
 export function EvidenceReference({ id, onEvidence }: { id: string; onEvidence?: (id: string) => void }) {
   return onEvidence
@@ -14,9 +15,9 @@ function RawValue({ value }: { value: string | null }) {
 
 export function FindingsTable({ findings, onEvidence }: { findings: Finding[]; onEvidence?: (id: string) => void }) {
   return (
-    <div className="table-scroll" role="region" aria-label="SYNTHETIC findings table" tabIndex={0}>
+    <div className="table-scroll" role="region" aria-label={`${sourceLabel} findings table`} tabIndex={0}>
       <table>
-        <caption>SYNTHETIC findings — values and statuses exactly as returned</caption>
+        <caption>{sourceLabel} findings — values and statuses exactly as returned</caption>
         <thead>
           <tr>
             {['Measurement / evidence references', 'Value (raw)', 'Unit', 'Lower bound (raw)', 'Upper bound (raw)', 'Deviation', 'Range status', 'Quality flags', 'Raw fail code'].map((heading) => (

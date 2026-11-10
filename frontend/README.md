@@ -1,9 +1,12 @@
-# MAGNA TRACE frontend — D3
+# MAGNA TRACE frontend — D4 transport support
 
-Local Vite dashboard and **SYNTHETIC ONLY** B2 fixture replay server.
+Local Vite dashboard with explicit **mock / live API** modes and a
+**SYNTHETIC ONLY** B2 fixture replay server. Mock mode remains the default.
 D2 provides station selection, case opening and a findings table. D3 adds
-case-local evidence details and a read-only active-case handover. Live backend
-integration (D4), an answer-entry workflow and P1 features are not implemented.
+case-local evidence details and a read-only active-case handover. D4 adds live
+B2 transport support without fallback to mock. Successful live findings,
+evidence and handover remain unverified; an answer-entry workflow and P1
+features are not implemented.
 
 ## Pinned contract
 
@@ -34,12 +37,14 @@ npm install
 read -rsp 'Local TRACE_API_KEY: ' TRACE_API_KEY; echo
 export TRACE_API_KEY
 export TRACE_API_TARGET=http://127.0.0.1:8001
+export VITE_TRACE_API_MODE=mock
 npm run mock
 ```
 
 In a second terminal, export the **same** `TRACE_API_KEY` and target, then:
 
 ```bash
+export VITE_TRACE_API_MODE=mock
 npm run dev
 ```
 
@@ -50,9 +55,65 @@ The Vite configuration also supports server-only `.env.local` values; the mock
 reads shell environment variables, so export the key for both processes.
 `.env` and `.env.*` are ignored.
 
+### Explicit live mode
+
+Keep the real FastAPI process running according to its owner's instructions.
+From `frontend/`, stop any previous Vite process, enter the backend's existing
+key at the hidden prompt and select its actual loopback address. For the
+existing default backend target on port 8000:
+
+```bash
+read -rsp 'Backend TRACE_API_KEY: ' TRACE_API_KEY; echo
+export TRACE_API_KEY
+export TRACE_API_TARGET=http://127.0.0.1:8000
+export VITE_TRACE_API_MODE=live
+npm run dev
+```
+
+Change the target if your backend listens on a different port; a remote target
+must use trusted HTTPS. `TRACE_API_KEY` and `TRACE_API_TARGET` are read by the
+Node proxy only. The single public setting `VITE_TRACE_API_MODE` contains only
+`mock` or `live`; it must never contain credentials. Invalid mode values fail
+Vite startup/build. If unset, the mode defaults to `mock` (including builds).
+Restart Vite and reload the browser after switching either mode or target;
+changing a target never automatically selects live mode.
+
+Live mode GETs `/api/v1/stations` without the synthetic search term and POSTs
+only the selected `station_number` when opening a case. B2 makes time and serial
+filters optional; no synthetic date range is sent. It accepts unmarked B2
+responses through the existing validators, displays backend error codes/messages
+and rejects any response carrying `X-Trace-Mock`. It never retries against a mock
+or supplies fixture findings on failure. The labels identify **LIVE API mode**,
+not a claim that a returned observation has independently passed SQL verification.
+
+Student D reports HTTP 200 for backend health/readiness and authenticated echo
+(including echo through Vite), with 1524 measurement rows. The station request
+through Vite currently returns HTTP 503 `SOURCE_UNAVAILABLE` with
+`A2 station adapter is not connected`. These are supplied observations, not live
+checks executed by this frontend change. The dashboard now displays that B2
+error instead of requiring a synthetic marker. Successful live station/case/
+evidence/handover verification remains pending A2/A3 and B's integration.
+
+To return to mock mode, restart Vite with:
+
+```bash
+export VITE_TRACE_API_MODE=mock
+export TRACE_API_TARGET=http://127.0.0.1:8001
+read -rsp 'Local TRACE_API_KEY: ' TRACE_API_KEY; echo
+export TRACE_API_KEY
+npm run dev
+```
+
+Start `npm run mock` in another terminal with the same local key, as above.
+No live credential is needed by the synthetic server. Builds bake in the public
+mode: use `VITE_TRACE_API_MODE=live npm run build` for a live-labelled build.
+Static preview still has no API proxy. The repository's root README and D7 pitch
+describe the earlier synthetic-only preparation snapshot; they are deliberately
+outside this D4 change.
+
 ## D2 dashboard
 
-The station selector loads `list_stations` through the Vite proxy. Choose
+In default mock mode, the station selector loads `list_stations` through the Vite proxy. Choose
 `SYNTHETIC-STATION`, then select **Open diagnostic case**. The request uses the
 exact pinned replay scope shown on screen; `src/demo-scope.json` contains only
 the request's from/to/serial fields, verified against the pinned fixture by the
@@ -70,9 +131,9 @@ Warnings and source retrieval time are displayed as returned. Changing the
 station, reloading stations or opening another case clears prior findings.
 Errors show the returned code/message and exact queried scope when supplied;
 network, non-JSON and unexpected responses produce a technical error without
-substitute findings. Loading disables duplicate submissions. D2 accepts only
-responses labeled `X-Trace-Mock: SYNTHETIC`, so a live backend cannot silently be
-presented as mock data. Live integration remains D4 work.
+substitute findings. Loading disables duplicate submissions. Mock mode accepts
+only responses labeled `X-Trace-Mock: SYNTHETIC`; live mode rejects marked mock
+responses. Neither mode silently switches to the other.
 
 ## D3 evidence and handover
 
@@ -107,7 +168,7 @@ fresh observation. No response fixture is used as a UI fallback.
 
 ### Preparing the existing post-answer handover fixture
 
-The pinned mock supplies **only a post-answer handover**. A pre-answer request
+In mock mode, the pinned server supplies **only a post-answer handover**. A pre-answer request
 honestly shows the existing HTTP 501 replay-limit error; no report or earlier
 handover is fabricated. After opening the case in the dashboard, this optional
 local test setup sends the exact existing B2 answer fixture through Vite:
@@ -191,6 +252,8 @@ Code `1001` and null have unknown semantics and never establish PASS/FAIL.
 npm run build
 npm run test:mock
 npm run test:dashboard
+node --test scripts/transport.test.mjs
+node --test scripts/live-mode.test.mjs
 ```
 
 The smoke test invokes `npm run build` with a random server-only key, starts an
@@ -222,9 +285,40 @@ requests. The shared Firefox helper is in `scripts/browser.mjs`. The mock suite
 continues to check pinned file hashes and absence of the random server key in
 React sources and the production bundle.
 
+The separate `live-mode.test.mjs` uses only an ephemeral local protocol stub and
+unchanged synthetic example payloads; it does not contact FastAPI or Oracle.
+It checks unmarked B2 success responses, the reported station-adapter error,
+live labels and scope, stale-data cleanup, malformed/transport failures,
+mock-marker rejection, and server-key absence in a live-mode build. These are
+frontend compatibility tests, never evidence of successful live integration.
+For the existing mock/dashboard/transport suites, use `VITE_TRACE_API_MODE=mock`
+(or leave it unset with no local mode override).
+
+### D4 execution record — 2026-11-10
+
+| Command from frontend/ | Actual result |
+| --- | --- |
+| `npm run build` | PASSED; TypeScript and Vite build |
+| `VITE_TRACE_API_MODE=mock npm run test:mock` | PASSED; one suite test, pinned hashes/auth/proxy and bundle key checks |
+| `VITE_TRACE_API_MODE=mock npm run test:dashboard` | PASSED; both D2/D3 browser tests |
+| `VITE_TRACE_API_MODE=mock node --test scripts/transport.test.mjs` | PASSED; 41 leaf scenarios, 42 TAP tests including the parent |
+| `node --test scripts/live-mode.test.mjs` | PASSED; nine subtests, ten TAP tests including the parent; also builds in live mode and checks for key leakage |
+
+The initial D4 test attempts were blocked by sandbox loopback permissions and
+an occupied port 5173. Test runs subsequently used local-server/browser
+permission and available ports. The four existing test files change only
+`strictPort` to allow Vite to select a free port; their assertions are unchanged.
+An existing development process was not stopped. Deliberate invalid-mode and
+socket-reset checks print expected configuration/proxy errors.
+
+All successful runs above are local frontend/protocol tests. No real FastAPI,
+Oracle or Copilot call was executed in this D4 change. Live measurement/evidence
+acceptance, source-side failures and gate verification remain **PENDING**.
+
 Remaining dependencies: final B2 freeze and A/C confirmations, open D12 scope and
 configuration details, B's authenticated backend and A's Oracle/analysis modules.
 These local synthetic checks do not verify Oracle, Copilot, integration gates or
 production deployment. D2/D3 are implemented against the pinned candidate only;
-D4 and P1 work remain outside this change. Future work must follow the agreed
-contract when the team freezes B2.
+D4 live transport/error display is supported; successful live measurements and
+evidence remain pending, and P1 stays outside this change. Future work must
+follow the agreed contract when the team freezes B2.

@@ -72,7 +72,7 @@ test('D6: transport and malformed responses never become fresh diagnostic data',
     if (previousTarget === undefined) delete process.env.TRACE_API_TARGET
     else process.env.TRACE_API_TARGET = previousTarget
   })
-  const vite = await createViteServer({ configFile: resolve('vite.config.mjs'), server: { host: '127.0.0.1', port: 0, strictPort: true } })
+  const vite = await createViteServer({ configFile: resolve('vite.config.mjs'), server: { host: '127.0.0.1', port: 0, strictPort: false } })
   t.after(() => vite.close())
   await vite.listen()
   const pageUrl = `http://127.0.0.1:${vite.httpServer.address().port}`
