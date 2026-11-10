@@ -1,5 +1,8 @@
 # Student B — FastAPI, cases и evidence
 
+Актуальный статус перед интеграцией и Definition of Done: [LOCAL_DOD.md](LOCAL_DOD.md).
+Единая локальная проверка из корня: `python -m student_b.verify` — 75 тестов, 35 B2 fixtures и два синтетических сценария.
+
 Новая папка runtime B. Импортирует общий `backend/app/schemas.py` из B2, не содержит второй копии контракта и не изменяет пакет D. Основание B2: `145652f917cd8b5ccda40f214a03ba45d490150d`. Copilot/MCP отложены по указанию пользователя; новую интеграцию C этот пакет не реализует.
 
 ## Принят интерфейс A1
