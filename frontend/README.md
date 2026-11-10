@@ -1,8 +1,9 @@
-# MAGNA TRACE frontend — D2
+# MAGNA TRACE frontend — D3
 
 Local Vite dashboard and **SYNTHETIC ONLY** B2 fixture replay server.
-D2 provides station selection, case opening and a findings table. Evidence
-drill-down (D3), live backend integration (D4) and P1 features are not implemented.
+D2 provides station selection, case opening and a findings table. D3 adds
+case-local evidence details and a read-only active-case handover. Live backend
+integration (D4), an answer-entry workflow and P1 features are not implemented.
 
 ## Pinned contract
 
@@ -58,8 +59,8 @@ the request's from/to/serial fields, verified against the pinned fixture by the
 UI test. No response fixtures are imported into React or used as error fallbacks.
 
 The table displays measurement, raw value/unit/bounds, returned deviation, range
-status, quality flags and raw fail code in separate columns. Plain evidence IDs
-provide references only; no evidence fetch or drill-down is implemented. Raw
+status, quality flags and raw fail code in separate columns. Observed and
+calculated evidence IDs now open their captured details through GET requests. Raw
 strings retain their precision/whitespace; null is visibly rendered as `null`.
 ABOVE, BELOW, WITHIN_RECORDED_BOUNDS and NOT_EVALUABLE have distinct labels and
 styling; they are never derived from values or codes. In particular the pinned
@@ -72,6 +73,64 @@ network, non-JSON and unexpected responses produce a technical error without
 substitute findings. Loading disables duplicate submissions. D2 accepts only
 responses labeled `X-Trace-Mock: SYNTHETIC`, so a live backend cannot silently be
 presented as mock data. Live integration remains D4 work.
+
+## D3 evidence and handover
+
+Open a case, then select either reference in a findings row. Observations use
+`evidence_id`; calculations use `calculation_evidence_id`. The dashboard retains
+the API-issued active `case_id` and GETs
+`/api/v1/cases/{case_id}/evidence/{evidence_id}`. It checks the returned case and
+evidence ID before displaying the classification and exact captured JSON.
+OBSERVED includes raw source fields, queried scope, source timestamp, row
+ordinal and retrieval time. CALCULATED includes input references, rule and
+result; input references open their observations. TECHNICIAN_REPORTED includes
+the reported answer, question, attribution, time and conflict references.
+The evidence-ID lookup requests details only; it never creates an evidence ID.
+The two pinned invalid/foreign IDs show their actual API errors without retaining
+old detail data. No request re-queries Oracle or computes a measurement here.
+
+**Load handover** GETs `/api/v1/cases/{case_id}/handover`. The view uses actual
+B2 fields: `observations`, `technician_reports`, `assessment.unknowns`, unverified
+`assessment.hypotheses` and their `limitations`, `open_questions`, `gaps`,
+`scope.coverage_warnings` and `next_action`. B2 has no top-level handover
+`warnings` field; warning entries in `gaps` remain there, while the separately
+loaded snapshot warnings remain labeled above. The P0 assessment must be
+`UNDETERMINED`; a different label is rejected rather than rewritten. Returned
+data is also available under **Exact SYNTHETIC handover data**. Observations,
+reports, hypothesis references and next-action evidence all retain their IDs.
+
+Changing/reopening the case clears evidence and handover state and aborts
+in-flight detail requests. A new detail request clears its old data before
+loading, and errors remain local to that panel. The original findings keep
+their source retrieval timestamp; a failed detail call is never presented as a
+fresh observation. No response fixture is used as a UI fallback.
+
+### Preparing the existing post-answer handover fixture
+
+The pinned mock supplies **only a post-answer handover**. A pre-answer request
+honestly shows the existing HTTP 501 replay-limit error; no report or earlier
+handover is fabricated. After opening the case in the dashboard, this optional
+local test setup sends the exact existing B2 answer fixture through Vite:
+
+```bash
+node --input-type=module <<'JS'
+import { readFileSync } from 'node:fs';
+const fixtures = JSON.parse(readFileSync('mock/b2/examples.json', 'utf8'));
+const fixture = fixtures.cases.find(item => item.name === 'record_answer');
+const response = await fetch(new URL(fixture.path, 'http://127.0.0.1:5173'), {
+  method: fixture.method,
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(fixture.request.body),
+});
+console.log(`SYNTHETIC answer setup: HTTP ${response.status}`);
+if (!response.ok) process.exitCode = 1;
+JS
+```
+
+Run from `frontend/`, adjusting the port if Vite printed a different one. Then
+select **Load handover** and inspect its report reference. This is explicit
+synthetic test preparation, not a dashboard answer feature or technician claim.
+Reopening the mock case resets its answer; repeat the setup if needed.
 
 React requests must use relative `/api/v1/...` URLs without credentials. Vite
 reads `TRACE_API_KEY` only in Node and overwrites `X-API-Key` on every proxied
@@ -153,9 +212,19 @@ checks all four status labels and exact whitespace/scientific-notation rendering
 with render-only synthetic inputs, without changing any API fixtures. No
 additional test dependency is installed. Firefox must be available on PATH.
 
+The same command also runs focused D3 browser tests: all six finding references
+and the report resolve to the exact pinned evidence data; calculation inputs
+resolve; unknown/foreign IDs display their GET errors; pre-answer handover shows
+the replay limit; an explicit test-only answer prepares the exact B2 handover.
+The handover payload, unknowns, limitations, warnings/gaps and next action are
+checked, as are removal of stale data on refresh errors, case reset and delayed
+requests. The shared Firefox helper is in `scripts/browser.mjs`. The mock suite
+continues to check pinned file hashes and absence of the random server key in
+React sources and the production bundle.
+
 Remaining dependencies: final B2 freeze and A/C confirmations, open D12 scope and
 configuration details, B's authenticated backend and A's Oracle/analysis modules.
 These local synthetic checks do not verify Oracle, Copilot, integration gates or
-production deployment. D2 is complete against the pinned candidate only; D3/D4
-and P1 work remain outside this change. Future work must follow the agreed
+production deployment. D2/D3 are implemented against the pinned candidate only;
+D4 and P1 work remain outside this change. Future work must follow the agreed
 contract when the team freezes B2.

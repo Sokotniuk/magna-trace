@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "mock": "node mock/server.mjs",
     "test:mock": "node --test scripts/mock.test.mjs",
-    "test:dashboard": "node --test scripts/dashboard.test.mjs",
+    "test:dashboard": "node --test --test-concurrency=1 scripts/dashboard.test.mjs scripts/case-details.test.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1"
   },

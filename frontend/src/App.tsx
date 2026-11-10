@@ -1,59 +1,18 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ApiError, listStations, openCase } from './api'
-import type { Finding, Snapshot, Station } from './api'
+import type { OpenedCase, Station } from './api'
 import demoScope from './demo-scope.json'
-
-function RawValue({ value }: { value: string | null }) {
-  return value === null
-    ? <span className="null-value" title="API null; no recorded value">null</span>
-    : <span className="raw-value">{value}</span>
-}
-
-export function FindingsTable({ findings }: { findings: Finding[] }) {
-  return (
-    <div className="table-scroll" role="region" aria-label="SYNTHETIC findings table" tabIndex={0}>
-      <table>
-        <caption>SYNTHETIC findings — values and statuses exactly as returned</caption>
-        <thead>
-          <tr>
-            {['Measurement / evidence references', 'Value (raw)', 'Unit', 'Lower bound (raw)', 'Upper bound (raw)', 'Deviation', 'Range status', 'Quality flags', 'Raw fail code'].map((heading) => (
-              <th scope="col" key={heading}>{heading}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {findings.map((finding) => (
-            <tr key={finding.evidence_id}>
-              <th scope="row">
-                {finding.measurement}
-                <small>Observed: <code>{finding.evidence_id}</code></small>
-                <small>Calculated: <code>{finding.calculation_evidence_id}</code></small>
-              </th>
-              <td><RawValue value={finding.raw_value} /></td>
-              <td><RawValue value={finding.unit} /></td>
-              <td><RawValue value={finding.raw_lower} /></td>
-              <td><RawValue value={finding.raw_upper} /></td>
-              <td><RawValue value={finding.deviation} /></td>
-              <td><span className={`range-status range-${finding.range_status}`}>{finding.range_status}</span></td>
-              <td>{finding.quality_flags.length
-                ? <ul className="flags">{finding.quality_flags.map((flag) => <li key={flag}>{flag}</li>)}</ul>
-                : <span className="muted">No flags returned</span>}</td>
-              <td><RawValue value={finding.raw_fail_code} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
+import CaseDetails from './CaseDetails'
+export { FindingsTable } from './FindingsTable'
 
 export default function App() {
   const [stations, setStations] = useState<Station[]>([])
   const [selectedStation, setSelectedStation] = useState('')
   const [loadingStations, setLoadingStations] = useState(true)
   const [opening, setOpening] = useState(false)
-  const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
+  const [activeCase, setActiveCase] = useState<OpenedCase | null>(null)
+  const snapshot = activeCase?.data
   const [error, setError] = useState<ApiError | null>(null)
   const [reload, setReload] = useState(0)
 
@@ -62,7 +21,7 @@ export default function App() {
     setLoadingStations(true)
     setStations([])
     setSelectedStation('')
-    setSnapshot(null)
+    setActiveCase(null)
     setError(null)
     listStations(controller.signal).then((items) => {
       if (!controller.signal.aborted) setStations(items)
@@ -80,10 +39,10 @@ export default function App() {
     event.preventDefault()
     if (!selectedStation || opening) return
     setOpening(true)
-    setSnapshot(null)
+    setActiveCase(null)
     setError(null)
     try {
-      setSnapshot(await openCase(selectedStation))
+      setActiveCase(await openCase(selectedStation))
     } catch (reason: unknown) {
       setError(reason instanceof ApiError ? reason : new ApiError('Could not reach the mock API. No findings loaded.'))
     } finally {
@@ -106,7 +65,7 @@ export default function App() {
           <div className="station-controls">
             <select id="station" value={selectedStation} disabled={loadingStations || opening} onChange={(event) => {
               setSelectedStation(event.target.value)
-              setSnapshot(null)
+              setActiveCase(null)
               setError(null)
             }}>
               <option value="">Select a station</option>
@@ -137,7 +96,7 @@ export default function App() {
           {snapshot.warnings.length ? <ul>{snapshot.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> : <p>No warnings returned.</p>}
           {snapshot.scope.coverage_warnings.length > 0 && <><h4>Scope coverage warnings</h4><ul>{snapshot.scope.coverage_warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></>}
         </section>
-        {snapshot.findings.length ? <FindingsTable findings={snapshot.findings} /> : <p>No findings returned for this scope.</p>}
+        <CaseDetails caseId={activeCase!.case_id} snapshot={snapshot} />
       </section>}
     </main>
   )
