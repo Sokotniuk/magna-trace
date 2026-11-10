@@ -72,6 +72,17 @@ function nullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string'
 }
 
+function validRawFields(value: unknown): boolean {
+  if (!object(value)) return false
+  // B2 requires these keys even when a recorded value is null.
+  const required = [
+    'MEASURE_VALUE', 'LOWER_LIMIT', 'UPPER_LIMIT', 'UNIT',
+    'MEASURE_FAIL_CODE', 'station_number', 'serial_number', 'BOOK_STAMP',
+  ]
+  return required.every((key) => Object.hasOwn(value, key)) &&
+    typeof value.station_number === 'string' && Object.values(value).every(nullableString)
+}
+
 function validFinding(finding: unknown): finding is Finding {
   return object(finding) &&
     ['measurement', 'evidence_id', 'calculation_evidence_id'].every((key) => typeof finding[key] === 'string') &&
@@ -100,7 +111,8 @@ async function request(path: string, init?: RequestInit) {
     }
     throw new ApiError(`HTTP ${response.status}: request failed. No data loaded for this request.`)
   }
-  if (body.status !== 'ok' || body.error !== null || !object(body.data)) {
+  if (body.status !== 'ok' || body.error !== null || !object(body.data) ||
+      typeof body.request_id !== 'string' || typeof body.retrieved_at !== 'string') {
     throw new ApiError('Unexpected response envelope. No data loaded for this request.')
   }
   return body
@@ -149,7 +161,7 @@ export async function getEvidence(caseId: string, evidenceId: string, signal?: A
   }
   const valid = data.classification === 'OBSERVED'
     ? typeof data.source_table === 'string' && typeof data.measurement === 'string' && object(data.scope) &&
-      object(data.raw_fields) && Object.values(data.raw_fields).every(nullableString) &&
+      validRawFields(data.raw_fields) &&
       typeof data.row_ordinal === 'number' && typeof data.retrieved_at === 'string'
     : data.classification === 'CALCULATED'
       ? strings(data.input_evidence_ids) && typeof data.rule === 'string' && typeof data.retrieved_at === 'string' &&
