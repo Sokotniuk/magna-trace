@@ -172,7 +172,7 @@ Team cut order is knowledge retrieval → dashboard comparison view → A7 → d
 
 | Step | Status | Commit | Verification | Blockers / open prerequisites | Next action |
 | --- | --- | --- | --- | --- | --- |
-| A1 | NOT_STARTED | — | — | Explicit approval; restricted session | Verify readiness, then count |
+| A1 | DONE | uncommitted | Both baseline runs verified; SQL/Python count 1524; B accepted the complete handoff; 48 tests pass | No outstanding A1 requirement; D15 accepted and unresolved for A6 | Prepare the isolated A1 changes for commit authorization; keep A2 unstarted |
 | A2 | NOT_STARTED | — | — | A1, B interface | Confirm scope and ordering |
 | A3 | NOT_STARTED | — | — | A2 read contract | Prepare D04/D05 fixtures |
 | A4 | NOT_STARTED | — | — | A3, student SQL access | Locate candidate rows |
@@ -182,6 +182,81 @@ Team cut order is knowledge retrieval → dashboard comparison view → A7 → d
 | A7 | NOT_STARTED | — | — | A2–A6, G1, stable P0, verified keys | Check eligibility on the selected dimension |
 
 **Checkpoint after each future step.** Record date, task/status, branch/revision or uncommitted state, changed files, commands and actual outcomes, independent expected vs observed, safe evidence references, handoff/recipient, deviations or blocker/owner, and the next single action. Update the ledger even when blocked. Commit only on student request after verifying the staged diff.
+
+**A1 checkpoint — 2026-11-10.** Development authorized on `feature/student-a`, based on `ce92256`; changes are uncommitted. Files are `backend/app/oracle_repo.py`, `tests/test_oracle_repo.py`, `docs/data-baseline.sql` and this ledger.
+
+- `docker ps --format '{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'` reported `oracle-free` healthy with `127.0.0.1:1521->1521/tcp`. No database connection was attempted. The student confirmed that the dedicated account is not ready and authorized continued work without credentials.
+- With permission, installed `oracledb 26.1.0` and `pytest 9.2.0` with their transitive dependencies in `F:\tuke\hackaton\.venvs\student-a`, outside the worktree, using Python 3.13.15.
+- Ran `& 'F:\tuke\hackaton\.venvs\student-a\Scripts\python.exe' -B -m pytest -q -p no:cacheprovider` → **46 passed in 0.27s**. Ran that interpreter's `-m pip check` → **No broken requirements found.** These tests use a synthetic count of seven, separately test zero, and check driver failures without opening a socket.
+- SQL checks are static. The baseline contains identity, effective privileges, role/object grants, exact table counts, column metadata and candidate constraints. Neither Oracle syntax/name resolution nor query results have been validated. Station/serial, unit/code, numeric-format and uniqueness profiles remain pending the actual column inventory.
+- **B1 handoff prepared; receipt pending.** Import `count_measurements` from `backend.app.oracle_repo`. The draft Python signature accepts keyword-only `user`, `password` and `dsn`, with provisional `call_timeout_ms=5000` and `connect_timeout_seconds=5`. B supplies approved server-side settings and records retrieval time. Success is an integer, including zero. `SourceUnavailableError.code` is `SOURCE_UNAVAILABLE`; `OracleTimeoutError.code` is `TIMEOUT`. Invalid internal settings raise `ValueError` before connecting. No API route or envelope was added.
+- **To unblock live A1.** The environment owner must provide an approved dedicated login to `FREEPDB1` with login privilege and SELECT access to the four required `HACKATON` tables, with effective privileges verified through the metadata queries or administrator attestation. Make `ORACLE_USER`, `ORACLE_PASSWORD` and `ORACLE_DSN` available locally to the verification process; keep the password out of chat and Git. An authorized student then runs the scalar SELECT independently, compares it with the callable, runs the baseline twice, and verifies the source column mapping before adding the remaining fixed profiles. B1 acknowledges the callable and live result. A1 remains blocked until that evidence is recorded.
+- **Next single action.** Obtain the approved restricted connection settings. A2–A8 have no implementation changes; follow the dependency gates.
+
+**A1 live-evidence update — 2026-11-10.** The student resolved the account/access blocker and supplied independent live evidence (D13/D14). Historical notes above describe the initial offline session.
+
+| A1 check | Evidence and current disposition |
+| --- | --- |
+| Restricted connection | Both logs show `MAGNA_TRACE_RO`, `FREEPDB1`, `CREATE SESSION`, four explicit SELECT grants, no enabled roles, no direct column grants and no owned objects. The student separately verified loopback port `127.0.0.1:1521`. Password entry remained local to the student. |
+| Independent scalar read | Student's SQL `COUNT(*)` = **1524**, live `count_measurements()` = **1524**. The supplied results match the historical measurement count; source retrieval timestamp was not supplied. |
+| Other exact counts | Student's SQL returned `MACHINE_LINES=29`, `SNO_BOOKINGS_WP=150`, `WORKORDERS=58`. These replace approximate statistics for this reported source state. |
+| Column inventory | Student supplied 23 columns from `ALL_TAB_COLUMNS`; A1-08–A1-15 now use those exact names, including raw numeric/null fail codes and TIMESTAMP(6). No stable key or join has been established. |
+| Baseline execution and DoD | Independent inspection found all 26 expected result sets (21 nonempty and 5 empty) in the expected order in each log, covering A1-01–A1-15. No Oracle, SQL*Plus, driver or file-open error was found. Stable output matches exactly across runs. Station, serial and unit group totals, code totals and every numeric-field partition reconcile to 1524. Detailed results follow below. |
+| Latest application tests (prior session) | Existing environment is `F:\tuke\hackaton\.venvs\student-a`. Python 3.13.15, oracledb 26.1.0 and pytest 9.2.0 were confirmed. `& 'F:\tuke\hackaton\.venvs\student-a\Scripts\python.exe' -B -m pytest -q -p no:cacheprovider` → **48 passed in 0.26s**. `-m pip check` → **No broken requirements found.** This log-review session changes documentation only; application tests were not rerun. |
+| TCP timeout and retries | Real-driver socket-call integration with an injected TCP timeout observed exactly one connection attempt and a 1-second timeout despite a DSN requesting 20 seconds and two retries. Synthetic tests verify the post-login `call_timeout` setting and error mapping. |
+| Timeout limitation | An initial stalled-handshake probe did not finish and was terminated. A bounded repeat accepted one TCP connection, withheld the handshake and closed at 3 seconds; the callable returned `SourceUnavailableError` after **3015 ms** with a 1-second TCP timeout. Student B accepted D15 as an unresolved A6 follow-up. A hard Oracle handshake deadline and live post-login query timeout/cancellation remain unverified. |
+| B1 acknowledgement | **ACCEPTED — 2026-11-10.** The student explicitly reported B's acceptance of the complete A1 handoff, exact `count_measurements()` interface, live Oracle count **1524** and documented D15 limitation. No real Copilot call is claimed. |
+
+**Independent log audit — 2026-11-10.** Read `F:\tuke\hackaton\data\a1-run1.log` and `a1-run2.log` in place; no log or manufacturing-row export was copied into Git. Each file has 575 lines. Their sole difference is line 11, the `SYS_EXTRACT_UTC(SYSTIMESTAMP)` result: run 1 `2026-11-10T19:43:30.060494Z`, run 2 `2026-11-10T19:43:36.312311Z`. These are SQL baseline retrieval times; the earlier live Python call has no supplied retrieval timestamp. The logs contain results without echoed SQL text; coverage was checked against the 26 ordered result layouts and empty-result positions in the current baseline.
+
+- Run 1 SHA-256 is `bb4e4ba50e6a2755fe352f638b32875a61f5ded7f96f702a1cfddbaa663a233f`. Run 2 is `0604effecf5d5dcf3d8cd672b774707a54dc6f15060ef3584089de7e12c5394a`. After replacing only line 11 and joining lines with LF, both yield `eec9a3bbfde1c853e1f57283c9f932fc658639d6abb4dda3304fdac36aacbfef`.
+- A1-01–A1-07 account for identity, privilege/role/ownership checks, four table inventories/counts, 63 column-metadata rows (8/18/23/14 across the four tables) and 28 enabled/validated check-constraint rows. No primary/unique constraint appears in the returned metadata.
+- A1-03 also reports a PUBLIC `INHERIT PRIVILEGES` grant on `HACKATON`, with grantable NO. Oracle documents this as a user privilege controlling invoker-rights execution. The four inspected table grants are SELECT. This observation requires no permission change for the fixed SELECT path. [Oracle privilege reference](https://docs.oracle.com/en/database/oracle/oracle-database/26/dbseg/controlling-invokers-rights-privileges-procedure-calls-and-view-access.html)
+
+| Profile | Identical result in both runs |
+| --- | --- |
+| Exact table counts | Measurements 1524; machine lines 29; bookings 150; work orders 58. |
+| Population and source coverage | 23 stations, 27 serials, 164 measurement names. Missing source timestamps 0. BOOK_STAMP range `2026-11-09T10:39:13.108334` to `2026-11-09T14:36:01.099779`; source timezone remains unknown. |
+| Units and codes | 30 recorded unit values; missing units 0. One measurement-name group has 22 records and 2 distinct recorded unit values. Raw code 1001 occurs 30 times; raw null occurs 1494 times. Code meaning and unit compatibility remain unverified. |
+| MEASURE_VALUE format screen | 1524 total = 0 missing + 1261 decimal-text matches + 263 nonmatches. |
+| LOWER_LIMIT format screen | 1524 total = 0 missing + 1503 decimal-text matches + 21 nonmatches. |
+| UPPER_LIMIT format screen | 1524 total = 0 missing + 1508 decimal-text matches + 16 nonmatches. |
+| Bound presence | Both fields present on 1524 rows. Both missing, lower-only and upper-only counts are each 0. |
+| Locator collisions | All 1524 rows share a station/serial/time scope with another row. The extended candidate collides on 32 rows. These are affected-row counts; the number of candidate collision groups was not queried. |
+| Full-row duplicates | 0 rows belong to duplicate groups over all 23 fields, hence 0 exact full-row duplicate groups. A durable row key remains unestablished. |
+
+**Numeric screening limits.** A1-12 applies the provisional anchored decimal-text regex to whitespace-trimmed text. Its nonmatch counts establish a format-screening result. Raw-text review is still needed to distinguish categorical values, unsupported numeric spellings and malformed data. Decimal conversion, numerical bound checks, deviations and measurement semantics require A3's independent tests. The presence of both bounds does not establish a valid numerical interval. Retain raw inputs and the strict parser policy; changes require a dated decision. Unit compatibility and key validation belong to A5.
+
+**A1 acceptance disposition — DONE, 2026-11-10.** Student B's explicit acceptance closes the handoff requirement and accepts D15 as an unresolved technical limitation for A6. The recorded evidence satisfies A1's mandatory Definition of Done. This completes the A1 task; G0 remains C4's verification responsibility.
+
+| Mandatory A1 requirement | Recorded completion evidence |
+| --- | --- |
+| Owner scope and usable files | `backend/app/oracle_repo.py`, its module tests, `docs/data-baseline.sql`, this progress record and append-only decisions are A-owned deliverables. No B/C/D module or public API schema was changed. |
+| Oracle readiness and least-privilege reads | Student verified the healthy loopback container; both inspected logs show the restricted identity, CREATE SESSION, four SELECT grants, no enabled roles and no owned objects (D13/D16). |
+| Early live callable and B receipt | Fixed measurement COUNT returns an integer; independently executed SQL and student live Python both returned 1524. B accepted the interface, live result and complete handoff (D18). |
+| Complete baseline and repeatability | All 26 expected result sets cover table counts, metadata, population, units/codes, source coverage, numeric screening and row uniqueness. Both logs have no detected SQL errors and identical stable output; hashes and retrieval timestamps are recorded above. |
+| Correctness and failure checks | Final A1 run of `& 'F:\tuke\hackaton\.venvs\student-a\Scripts\python.exe' -B -m pytest -q -p no:cacheprovider` → **48 passed in 0.23s**. `-m pip check` → **No broken requirements found.** Synthetic counts, error mapping, cleanup, SQL safety and timeout/retry configuration checks pass. |
+| Contracts and provisional behavior | B accepted the exact synchronous signature below. Canonical source/timeout codes are reused. Five-second defaults remain provisional. D15's login-deadline gap and unverified live post-login timeout behavior are accepted for A6 follow-up. |
+| Evidence and Git hygiene | Local log hashes were rechecked during finalization; they still match. Only aggregate findings and metadata are included in the A1 documentation. Logs, passwords and generated bytecode are excluded from the staged five-file A1 change. Complete source/diff review and both Git whitespace checks passed; explicit commit authorization remains pending. |
+
+**A1 → B1 handoff.** Import from `backend.app.oracle_repo`. The exact synchronous signature is
+
+```python
+count_measurements(
+    *,
+    user: str,
+    password: str,
+    dsn: str,
+    call_timeout_ms: int = 5000,
+    connect_timeout_seconds: int = 5,
+) -> int
+```
+
+Use account `MAGNA_TRACE_RO`, DSN `127.0.0.1:1521/FREEPDB1`, and a password available transiently through the approved server-side credential mechanism. Passwords must stay out of chat, logs and files. The verified returned count is **1524** (student live run). B records the UTC retrieval time at its call. Errors are `SourceUnavailableError` with code `SOURCE_UNAVAILABLE` or `OracleTimeoutError` with code `TIMEOUT`; invalid internal settings raise `ValueError` before connecting. The count is uncached and has no fallback. B accepted this complete handoff on 2026-11-10, including D15, as relayed by the student in this chat. B1 owns route wiring, server-side credentials, authentication and the API envelope. C4 owns proof in the real tenant.
+
+**A6 follow-up, accepted and unresolved.** Preserve D15 as OPEN. Establish the login/handshake deadline and connector budget with B, then validate live post-login timeout/cancellation, cleanup and canonical error mapping under the restricted account. The existing TCP timeout and per-round-trip setting provide the scopes documented above; no hard handshake deadline or live post-login timeout has been verified. A6 remains NOT_STARTED.
+
+**Next single action.** Await explicit authorization to commit the reviewed five-file A1 change. Suggested message is `A1: verify restricted Oracle count and data baseline`. A2–A8 remain NOT_STARTED.
 
 **Resume.** Read the worktree’s `AGENTS.md`, this plan and `docs/decisions.md`. Run `git status --short --branch`, `git log -5 --oneline --decorate` and inspect pending diffs. Use the ledger to open only the next task's source section, modules, tests and evidence references. Recheck prerequisites and any changed baseline, then resume the first incomplete required step. Surface a blocker before changing scope.
 
