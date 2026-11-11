@@ -6,11 +6,11 @@ import sys
 
 
 def main() -> int:
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     checks = (
-        ("B unit/API regressions", ["-m", "pytest", "student_b/tests", "-q"]),
+        ("B unit/API regressions", ["-m", "pytest", "tests/api", "-q"]),
         ("Frozen B2 examples", ["contracts/b2/validate.py"]),
-        ("Two synthetic API journeys", ["-m", "student_b.tests.smoke"]),
+        ("Two synthetic API journeys", ["-m", "tests.api.smoke"]),
     )
     for label, args in checks:
         print(f"Checking: {label}", flush=True)

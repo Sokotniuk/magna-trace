@@ -1,4 +1,4 @@
-"""Run: python -m student_b.tests.smoke. Synthetic, no Oracle or external API."""
+"""Run: python -m tests.api.smoke. Synthetic, no Oracle or external API."""
 
 import json
 from pathlib import Path
@@ -7,8 +7,8 @@ from secrets import token_urlsafe
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator, FormatChecker
 
-from student_b.main import Settings, create_app
-from student_b.source import Failure
+from backend.app.main import Settings, create_app
+from backend.app.source import Failure
 from .synthetic import SyntheticSource
 
 

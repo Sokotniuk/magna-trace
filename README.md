@@ -20,16 +20,17 @@ Oracle access and Decimal analysis (A) ──► Oracle FREEPDB1 / HACKATON, SEL
 
 | Folder | Owner | Content |
 | --- | --- | --- |
-| `backend/app/` | A, B | `oracle_repo.py`, `measurements.py` (A); `schemas.py` — contract B2 (B) |
-| `student_b/` | B | FastAPI app, cases, evidence, answers, handover |
-| `agent/` | C | Web-chat agent, deterministic texts, MCP endpoint, application factory |
+| `backend/app/` | A, B | A: `oracle_repo.py`, `measurements.py`. B: `main.py`, `api.py`, `schemas.py` (contract B2), `cases.py`, `evidence.py`, `answers.py`, `diagnostics.py`, `source.py` |
+| `agent/` | C | Web-chat agent, sign-in, deterministic texts, MCP endpoint, application factory `agent.main:create_app` |
+| `copilot/` | C | Instructions and tool descriptions for the runtime Copilot Studio agent |
 | `frontend/` | D | React dashboard with mock and live modes; chat panel in live mode |
+| `tests/` | all | A's module tests (top level), `api/` (B), `agent/` (C), `audit/` (independent audit); D's QA checklist, expected values, backup plan and pitch |
 | `contracts/b2/` | B | JSON Schema, examples and validator of the REST contract |
-| `tests/` | A, D | A's module tests; D's QA checklist, expected values, demo backup plan and pitch |
-| `audit_tests/` | audit | Independent backend tests from the 2026-11-11 audit |
-| `docs/` | team | Product, architecture, plan, decisions (D30–D36 describe this integration), `demo-script.md`, audit report `FINAL_BACKEND_AUDIT.md` |
-| `student_c/` | C | **Legacy**, earlier backend and console chat. Not a demo fallback (audit F13), see `student_c/LEGACY.md` |
-| `devtools/` | B | B's context-pack and usage-gate tools |
+| `docs/` | team | Product, architecture, plan, decisions, `demo-script.md`, audit report; `student_b/` and `student_c/` hold the owners' reports and notes |
+| `devtools/` | B, C | B's context-pack, usage-gate and `verify.py`; `oracle/create_readonly_user.sql` |
+
+This is the layout of `AGENTS.md` §5 (decision D40). The earlier self-contained backend of student C
+was removed from the tree (audit F13: not a fallback); it remains in the Git history before D40.
 
 ### Branches
 
@@ -45,7 +46,7 @@ Student work starts on its own `feature/<name>` branch from `main` (AGENTS §10)
 
 | Check | Result (2026-11-11, integrator's machine) |
 | --- | --- |
-| Tests | 341 active (A, B, agent, audit) · legacy `student_c` 52, run separately · B2 validator PASS |
+| Tests | 345 (A, B, agent, audit) · B2 validator PASS |
 | Live Oracle through the integrated app | 1524 measurement rows, 23 stations |
 | Station ST3003 | Four values above their upper limit (Angle 7.592, Vibration 0.354, Position Accuracy 0.292, Motor Speed 50.457), all serial `1000000203` at one timestamp; Screw Count within limits with fail code 1001 |
 | Chat journey, API and browser | Case → source of 50.457 (calculated evidence) → technician answer recorded by the agent on its own → refusal of repair advice → handover; one model call and under 2 s per turn |
@@ -54,13 +55,13 @@ Student work starts on its own `feature/<name>` branch from `main` (AGENTS §10)
 
 ## Run it (Windows PowerShell, from the repository root)
 
-Needs Python 3.12+, Node 22+, and the Oracle container with a SELECT-only user (`student_c/scripts/create_readonly_user.sql`).
+Needs Python 3.12+, Node 22+, and the Oracle container with a SELECT-only user (`devtools/oracle/create_readonly_user.sql`).
 
 **1. Install once**
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r student_b\requirements-test.txt -r agent\requirements.txt
+.venv\Scripts\python.exe -m pip install -r backend\requirements-test.txt -r agent\requirements.txt
 cd frontend; npm install; cd ..
 ```
 
@@ -70,7 +71,7 @@ cd frontend; npm install; cd ..
 | --- | --- |
 | `TRACE_API_KEY` | 32–256 ASCII characters; shared by backend and Vite proxy |
 | `ORACLE_USER`, `ORACLE_PASSWORD`, `ORACLE_DSN` | SELECT-only account, e.g. DSN `localhost:1521/FREEPDB1` |
-| `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODEL` | OpenAI-compatible model endpoint; `OPENAI_MODEL` is a comma-separated list of fixed model IDs (setup: `student_c/docs/llm_router_setup.md`) |
+| `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODEL` | OpenAI-compatible model endpoint; `OPENAI_MODEL` is a comma-separated list of fixed model IDs (setup: `docs/student_c/llm_router_setup.md`) |
 | `TRACE_EXPECTED_ROUTE` | Comma-separated approved `provider/model` routes; answers from other routes are rejected |
 | `TRACE_ALLOW_REAL_DATA` | `1` only after data sharing with the model provider is approved; otherwise tools are blocked in the chat |
 
@@ -101,7 +102,7 @@ The station selector below the chat is D's read-only dashboard on the same API. 
 **5. Tests**
 
 ```powershell
-.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests student_b\tests agent\tests audit_tests --ignore=tests\d5_live_smoke.py
+.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests --ignore=tests\d5_live_smoke.py
 .venv\Scripts\python.exe -B contracts\b2\validate.py
 ```
 
@@ -129,6 +130,6 @@ corporate identity: no roles, no per-user case isolation.
 
 ## Open points
 
-- B to review the ordering of displayed findings in `student_b/diagnostics.py` (decision D31).
+- B to review the ordering of displayed findings in `backend/app/diagnostics.py` (decision D31).
 - Live Copilot gate G0 (credits), conflict-review flow for answers, total Oracle login deadline (D15), comparison module (A7).
-- Two timed rehearsals of the demo (`student_c/docs/demo_script.md`, `tests/demo_backup_plan.md`).
+- Two timed rehearsals of the demo (`docs/demo-script.md`, `tests/demo_backup_plan.md`).

@@ -6,8 +6,8 @@ Each result carries the ready-made `message` for the technician plus the compact
 
 from mcp.server.fastmcp import FastMCP
 
-from student_b.main import error_response
-from student_b.source import Failure
+from backend.app.main import error_response
+from backend.app.source import Failure
 
 from .tools import Session, Toolbox
 

@@ -9,8 +9,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app import oracle_repo as a
-from student_b.main import Settings, create_app
-from student_b.source import OracleCredentials, OracleSource
+from backend.app.main import Settings, create_app
+from backend.app.source import OracleCredentials, OracleSource
 
 
 @pytest.fixture

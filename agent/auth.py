@@ -23,9 +23,9 @@ from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from student_b.cases import utc_now
-from student_b.main import error_response
-from student_b.source import Failure
+from backend.app.cases import utc_now
+from backend.app.main import error_response
+from backend.app.source import Failure
 
 COOKIE = "trace_session"
 INTERNAL_HEADER = "x-trace-internal"

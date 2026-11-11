@@ -14,8 +14,8 @@ from dataclasses import replace
 from fastapi import FastAPI, Request
 from starlette.middleware import Middleware
 
-from student_b.main import Settings, create_app as create_backend
-from student_b.source import DataSource, Failure
+from backend.app.main import Settings, create_app as create_backend
+from backend.app.source import DataSource, Failure
 
 from .auth import Auth, Directory, EmployeeGate, make_auth_router
 from .chat import AgentConfig, ChatAgent, make_chat_router

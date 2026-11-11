@@ -12,8 +12,8 @@ from fastapi.testclient import TestClient
 
 from backend.app import oracle_repo as a
 from backend.app import schemas as s
-from student_b.main import Settings, create_app
-from student_b.source import OracleCredentials, OracleSource, raw_number_text
+from backend.app.main import Settings, create_app
+from backend.app.source import OracleCredentials, OracleSource, raw_number_text
 from .test_cases_api import assert_error, wire
 
 
@@ -198,7 +198,7 @@ def test_acceptance_client_against_real_loopback_http_and_packaged_a(integrated,
     from threading import Thread
     from time import monotonic, sleep
     import uvicorn
-    from student_b.live_check import Client, run_checks
+    from backend.app.live_check import Client, run_checks
 
     app, _, _, _, _ = integrated
     app.state.settings = replace(app.state.settings, row_limit=200)
@@ -223,6 +223,6 @@ def test_acceptance_client_against_real_loopback_http_and_packaged_a(integrated,
 
 @pytest.mark.parametrize("url", ["https://example.com", "http://example.com", "http://user:password@localhost", "http://localhost/api/v1"])
 def test_acceptance_client_rejects_remote_or_credential_urls(url, key):
-    from student_b.live_check import Client, CheckError
+    from backend.app.live_check import Client, CheckError
     with pytest.raises(CheckError):
         Client(url, key)

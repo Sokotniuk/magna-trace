@@ -7,8 +7,8 @@ from threading import Event, RLock
 import pytest
 
 from backend.app import schemas as s
-from student_b.cases import CaseStore
-from student_b.source import Failure
+from backend.app.cases import CaseStore
+from backend.app.source import Failure
 from .test_cases_api import assert_error
 
 

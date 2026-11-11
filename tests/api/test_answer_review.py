@@ -2,8 +2,8 @@
 
 import pytest
 from backend.app import schemas as s
-from student_b.answers import record_answer
-from student_b.source import Failure
+from backend.app.answers import record_answer
+from backend.app.source import Failure
 
 
 def body(opened):

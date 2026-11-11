@@ -9,8 +9,8 @@ from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator, FormatChecker
 from pydantic import ValidationError
 
-from student_b.main import Settings, create_app
-from student_b.source import Failure
+from backend.app.main import Settings, create_app
+from backend.app.source import Failure
 
 
 SCHEMA = json.loads((Path(__file__).resolve().parents[2] / "contracts/b2/schemas.json").read_text())

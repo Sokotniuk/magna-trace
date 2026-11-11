@@ -18,8 +18,8 @@ from urllib.parse import unquote
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
-from student_b.cases import utc_now
-from student_b.source import Failure
+from backend.app.cases import utc_now
+from backend.app.source import Failure
 
 from .tools import TOOL_SPECS, Session, Toolbox
 

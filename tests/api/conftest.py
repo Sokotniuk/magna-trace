@@ -5,7 +5,7 @@ from secrets import token_urlsafe
 import pytest
 from fastapi.testclient import TestClient
 
-from student_b.main import Settings, create_app
+from backend.app.main import Settings, create_app
 from .synthetic import Clock, SyntheticSource
 
 

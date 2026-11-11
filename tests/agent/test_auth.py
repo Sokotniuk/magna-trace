@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 from agent.auth import COOKIE, Auth, Directory, Employee, Sessions, Throttle, hash_password
 from agent.chat import AgentConfig
 from agent.main import create_app
-from student_b.main import Settings
-from student_b.tests.synthetic import SyntheticSource
+from backend.app.main import Settings
+from tests.api.synthetic import SyntheticSource
 
 PASSWORD = token_urlsafe(12)
 

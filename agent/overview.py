@@ -15,8 +15,8 @@ from typing import Callable
 from fastapi import APIRouter, Request
 
 from backend.app import schemas as s
-from student_b.cases import utc_now
-from student_b.source import Failure, translate_source_exception
+from backend.app.cases import utc_now
+from backend.app.source import Failure, translate_source_exception
 
 CACHE_SECONDS = 60
 

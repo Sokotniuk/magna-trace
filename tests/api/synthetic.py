@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 from backend.app import schemas as s
-from student_b.source import AnalyzedRow, Batch
+from backend.app.source import AnalyzedRow, Batch
 
 
 class Clock:

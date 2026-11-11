@@ -8,12 +8,12 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from agent.tests.test_agent import FakeModel, make, say
+from tests.agent.test_agent import FakeModel, make, say
 from agent.tools import Session
 from backend.app import oracle_repo as repo
-from student_b.main import Settings, create_app
-from student_b.source import OracleCredentials, OracleSource
-from student_b.tests.synthetic import SyntheticSource
+from backend.app.main import Settings, create_app
+from backend.app.source import OracleCredentials, OracleSource
+from tests.api.synthetic import SyntheticSource
 
 
 def test_untrusted_model_prose_is_not_a_fact_channel(monkeypatch):
@@ -164,7 +164,7 @@ def test_expired_case_does_not_retain_agent_context(monkeypatch):
 
 
 def test_partial_answer_failure_does_not_publish_report(monkeypatch):
-    from student_b import diagnostics
+    from backend.app import diagnostics
     key = "audit-synthetic-key-" * 3
     with TestClient(create_app(Settings(api_key=key), SyntheticSource()), raise_server_exceptions=False) as client:
         headers = {"X-API-Key": key}
