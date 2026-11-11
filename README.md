@@ -26,14 +26,26 @@ Oracle access and Decimal analysis (A) ──► Oracle FREEPDB1 / HACKATON, SEL
 | `frontend/` | D | React dashboard with mock and live modes; chat panel in live mode |
 | `contracts/b2/` | B | JSON Schema, examples and validator of the REST contract |
 | `tests/` | A, D | A's module tests; D's QA checklist, expected values, demo backup plan and pitch |
-| `docs/` | team | Product, architecture, plan, decisions (D30–D33 describe this integration) |
-| `student_c/` | C | Earlier self-contained backend and console chat — demo fallback, see its README |
+| `audit_tests/` | audit | Independent backend tests from the 2026-11-11 audit |
+| `docs/` | team | Product, architecture, plan, decisions (D30–D36 describe this integration), `demo-script.md`, audit report `FINAL_BACKEND_AUDIT.md` |
+| `student_c/` | C | **Legacy**, earlier backend and console chat. Not a demo fallback (audit F13), see `student_c/LEGACY.md` |
+| `devtools/` | B | B's context-pack and usage-gate tools |
+
+### Branches
+
+| Branch | Purpose |
+| --- | --- |
+| `main` | Integrated state, merged through pull requests only (by B) |
+| `integration/all` | Integrator's working branch; open a PR from it into `main` |
+| `feature/nikita` | D's unmerged D4 live case list; needs B's `GET /cases` routes first |
+
+Student work starts on its own `feature/<name>` branch from `main` (AGENTS §10).
 
 ## What is verified, and what is not
 
 | Check | Result (2026-11-11, integrator's machine) |
 | --- | --- |
-| Tests | A 192 · B 93 · agent 6 · legacy `student_c` 51 · B2 validator PASS |
+| Tests | 341 active (A, B, agent, audit) · legacy `student_c` 52, run separately · B2 validator PASS |
 | Live Oracle through the integrated app | 1524 measurement rows, 23 stations |
 | Station ST3003 | Four values above their upper limit (Angle 7.592, Vibration 0.354, Position Accuracy 0.292, Motor Speed 50.457), all serial `1000000203` at one timestamp; Screw Count within limits with fail code 1001 |
 | Chat journey, API and browser | Case → source of 50.457 (calculated evidence) → technician answer recorded by the agent on its own → refusal of repair advice → handover; one model call and under 2 s per turn |
