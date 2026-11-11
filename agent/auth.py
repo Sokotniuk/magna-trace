@@ -143,8 +143,11 @@ class Throttle:
 
     def blocked(self, username: str) -> bool:
         with self._lock:
-            q = self._fails.setdefault(username, deque())
-            self._trim(q)
+            for key, history in tuple(self._fails.items()):
+                self._trim(history)
+                if not history:
+                    del self._fails[key]
+            q = self._fails.get(username, deque())
             self._trim(self._all)
             return len(q) >= self.per_user or len(self._all) >= self.overall
 

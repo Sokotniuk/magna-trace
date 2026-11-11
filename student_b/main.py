@@ -154,6 +154,9 @@ def create_app(settings: Settings | None = None, source: DataSource | None = Non
                 raise Failure("INVALID_SCOPE", "Connector request rate exceeds the configured limit", 429)
             calls.append(current)
 
+    # The integrated chat must enforce the same connector admission limit.
+    app.state.authenticate = authenticate
+
     @app.exception_handler(Failure)
     async def failure_handler(request: Request, error: Failure):
         return error_response(request.scope, error)

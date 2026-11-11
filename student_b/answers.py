@@ -24,12 +24,14 @@ def record_answer(
             raise Failure("INVALID_SCOPE", "Review must provide a tuple of observed evidence references", 400)
         # attribution: signed-in demo employee when the integration layer supplies one (D34).
         extra = {"attribution": attribution} if attribution else {}
-        report = case.evidence.report(body.question_id, body.answer_text, utc_now(), reviewed_conflicts or (), **extra)
+        staged = case.evidence.staged_copy()
+        report = staged.report(body.question_id, body.answer_text, utc_now(), reviewed_conflicts or (), **extra)
         updated = diagnostics.record_report(case.snapshot, report, conflict_reviewed=reviewed_conflicts is not None)
         result = s.AnswerSnapshot(
             **updated.model_dump(), report_evidence_id=report.evidence_id,
             change_summary="Technician report added; observations preserved; next action updated.",
         )
+        case.evidence = staged
         case.snapshot = updated
         case.question_id = None
         case.transition("ANSWER_RECORDED")

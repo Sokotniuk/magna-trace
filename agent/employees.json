@@ -7,8 +7,8 @@
       "name": "Lucia Hrubá",
       "role": "Test technician",
       "shift": "A",
-      "salt": "6e3063e1c846f6eaab550cfe69dab383",
-      "password_hash": "8bb29deb349de7941f1a9432827a7f69759ceba11f29f631bf8f23b70392d941"
+      "salt": "36073d630b62b7d694c6fda82f59d112",
+      "password_hash": "177d1edbca6f59d692324fd9afdc2239efb33b6a055d90c94294db3c04b31519"
     },
     {
       "employee_id": "HDS-0157",
@@ -16,8 +16,8 @@
       "name": "Marek Dlhý",
       "role": "Maintenance technician",
       "shift": "A",
-      "salt": "a2becabe61409a3bfac794c51ca7f62d",
-      "password_hash": "603505076d4c25a2fd02091fcff9200a73a57df2fb4a3474c6e2f8d48c102c0c"
+      "salt": "a48f2725aefac1191fa79af998390ea1",
+      "password_hash": "9bfb3eef2346036682b2a67c410c05e834f52a0ad01f73d246fd0eaf8a97d39a"
     },
     {
       "employee_id": "HDS-0163",
@@ -25,8 +25,8 @@
       "name": "Tomáš Kováčik",
       "role": "Test technician",
       "shift": "B",
-      "salt": "29c9362fce1dd966ff95f38072ed7593",
-      "password_hash": "0f24012ea68f3cd15aeefb4bbbaf75eb0a3bcd7c571cf16729263842ed772f0d"
+      "salt": "37b28e21ee93bf312dda235b34a2dbcc",
+      "password_hash": "1a0fd32a893aad763e60fb30cc4a713734ef00179cd3523b9fe6acc10c0a2f11"
     },
     {
       "employee_id": "HDS-0178",
@@ -34,8 +34,8 @@
       "name": "Eva Šimková",
       "role": "Shift lead",
       "shift": "B",
-      "salt": "727668a9eea22704bb8959504abfbffe",
-      "password_hash": "6c8544296372daa8a3589214e7b9d5687e61364c049b5aab543ed22202107daf"
+      "salt": "147306268fbd882d7d0bcf8a2d370e7c",
+      "password_hash": "9db779a51e4df6c0c2dc6b5a172b73c3895022a13b8fe03ad68f14269c1766d3"
     },
     {
       "employee_id": "HDS-0181",
@@ -43,8 +43,8 @@
       "name": "Peter Baran",
       "role": "Maintenance technician",
       "shift": "C",
-      "salt": "a8551cf3056379d123ac6296a106625d",
-      "password_hash": "c16238e8fcb521d71bdc0c07153564c211fb304a9538a4af880add651a13d57d"
+      "salt": "f71e15162fcf2e3150d9661546c49729",
+      "password_hash": "a143b3f6a6b95c66911bda572b7c22434e806a19af599b87ec99476a08a5d114"
     },
     {
       "employee_id": "HDS-0194",
@@ -52,8 +52,8 @@
       "name": "Zuzana Mikulová",
       "role": "Quality engineer",
       "shift": "C",
-      "salt": "4a6dba6ebb1c697d7264cf0f2c92618f",
-      "password_hash": "dbc0b080845d65b65c4faba783ba8c9514f958325587a9b5eb5c2680672772da"
+      "salt": "5f96befd10e94fbd3de24969b66988d4",
+      "password_hash": "8d39d05ac2a04386c006aadd0731d5aed04a8f234ce4bacca96bb5857c8c7702"
     }
   ]
 }

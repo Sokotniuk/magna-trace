@@ -15,6 +15,12 @@ class EvidenceStore:
     def _next_id(self) -> str:
         return f"E-{self.case_id}-{len(self._items) + 1}"
 
+    def staged_copy(self) -> "EvidenceStore":
+        """Stage changes while retaining immutable evidence objects."""
+        staged = EvidenceStore(self.case_id)
+        staged._items = self._items.copy()
+        return staged
+
     def capture(self, scope: s.OpenCaseRequest, row: AnalyzedRow, ordinal: int, retrieved_at: datetime) -> s.Finding:
         observation = s.ObservedEvidence(
             evidence_id=self._next_id(), source_table="HACKATON.SNO_MEASUREMENT_DATA",

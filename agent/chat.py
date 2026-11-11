@@ -38,6 +38,7 @@ class AgentConfig:
     max_history: int = 24
     max_conversations: int = 50
     conversation_ttl_seconds: int = 7200
+    model_timeout_seconds: int = 30
 
     @property
     def enabled(self) -> bool:
@@ -89,12 +90,15 @@ class ChatAgent:
     def conversation(self, conversation_id: str | None) -> Conversation:
         now = time.monotonic()
         for key, conv in tuple(self._conversations.items()):
-            if now - conv.last_used > self.config.conversation_ttl_seconds:
+            if not conv.lock.locked() and now - conv.last_used > self.config.conversation_ttl_seconds:
                 del self._conversations[key]
         conv = self._conversations.get(conversation_id or "")
         if conv is None:
             if len(self._conversations) >= self.config.max_conversations:
-                oldest = min(self._conversations.values(), key=lambda c: c.last_used)
+                idle = [c for c in self._conversations.values() if not c.lock.locked()]
+                if not idle:
+                    raise Failure("SOURCE_UNAVAILABLE", "Conversation capacity is busy; retry later", 503)
+                oldest = min(idle, key=lambda c: c.last_used)
                 del self._conversations[oldest.conversation_id]
             conv = Conversation(uuid.uuid4().hex)
             self._conversations[conv.conversation_id] = conv
@@ -126,12 +130,28 @@ class ChatAgent:
                     raise ModelUnavailable(type(exc).__name__) from None
                 served = unquote(raw.headers.get("x-routed-via") or "") or model
                 routes = self.config.expected_routes
-                if routes and raw.headers.get("x-routed-via") and served not in routes:
+                if routes and (not raw.headers.get("x-routed-via") or served not in routes):
                     last = ModelUnavailable(f"unapproved route {served}")
                     continue  # never accept an answer from a model/provider that was not approved
                 parsed = raw.parse()
                 if inspect.isawaitable(parsed):
                     parsed = await parsed
+                # Validate the whole plan before any tool can change case state.
+                if not getattr(parsed, "choices", None) or len(parsed.choices) != 1:
+                    raise ModelUnavailable("invalid provider response")
+                message = getattr(parsed.choices[0], "message", None)
+                if message is None or not hasattr(message, "tool_calls"):
+                    raise ModelUnavailable("invalid provider response")
+                calls = message.tool_calls or []
+                if len(calls) > 1:
+                    raise ModelUnavailable("only one tool action is allowed per turn")
+                for call in calls:
+                    function = getattr(call, "function", None)
+                    if (not isinstance(getattr(call, "id", None), str)
+                            or not isinstance(getattr(function, "name", None), str)
+                            or not isinstance(getattr(function, "arguments", None), str)
+                            or len(function.arguments) > 8192):
+                        raise ModelUnavailable("invalid provider tool call")
                 return parsed, served
             if attempt < len(self.config.rate_limit_waits):
                 await asyncio.sleep(self.config.rate_limit_waits[attempt])
@@ -141,17 +161,22 @@ class ChatAgent:
         start = len(conv.messages)
         conv.messages.append({"role": "user", "content": text})
         try:
-            response, served = await self._complete(self._window(conv.messages))
+            response, served = await asyncio.wait_for(
+                self._complete(self._window(conv.messages)), self.config.model_timeout_seconds)
             self.last_model_ok, self.last_model_error = utc_now().isoformat(), None
-        except ModelUnavailable as exc:
+        except (ModelUnavailable, TimeoutError, ValueError, AttributeError, TypeError) as exc:
             self.last_model_error = utc_now().isoformat()
             del conv.messages[start:]
             return {"reply": "The language model is not available right now (rate limit or provider problem). "
                              "Nothing was changed; please send your message again in a moment.",
-                    "tool_calls": [], "model": None, "model_error": str(exc)}
+                    "tool_calls": [], "model": None, "model_error": type(exc).__name__}
         message = response.choices[0].message
         if not message.tool_calls:
-            reply = (message.content or "").strip() or "I could not produce an answer. Please rephrase."
+            # Prose from an untrusted model is not a source of manufacturing facts
+            # or approved procedures. Only deterministic tool output is displayed.
+            reply = ("I can investigate a station, show captured evidence, record your answer or provide a handover. "
+                     "I can't advise on physical interventions or establish a cause without approved evidence. "
+                     "Which data check would you like?")
             conv.messages.append({"role": "assistant", "content": reply})
             return {"reply": reply, "tool_calls": [], "model": served}
 
@@ -173,6 +198,9 @@ class ChatAgent:
                                       "provider has not been approved (TRACE_ALLOW_REAL_DATA).",
                                       {"status": "error", "code": "DATA_SHARING_NOT_APPROVED"})
                 else:
+                    if name == "record_answer":
+                        # The model selects the action, never the technician's testimony.
+                        args["answer_text"] = text
                     shown, compact = await self.toolbox.run(conv.session, name, args)
             texts.append(shown)
             calls.append({"name": name, "status": compact.get("status"), "code": compact.get("code"),
@@ -181,6 +209,12 @@ class ChatAgent:
                                   "content": json.dumps(compact, ensure_ascii=False, separators=(",", ":"))})
         conv.messages.append({"role": "assistant", "content": SHOWN})
         return {"reply": "\n\n".join(texts), "tool_calls": calls, "model": served}
+
+    async def aclose(self) -> None:
+        if self._client is not None and hasattr(self._client, "close"):
+            result = self._client.close()
+            if inspect.isawaitable(result):
+                await result
 
 
 class ChatRequest(BaseModel):
@@ -202,7 +236,12 @@ def make_chat_router(agent: ChatAgent, authenticate) -> APIRouter:
             raise Failure("INVALID_SCOPE", "Message is empty", 422)
         conv = agent.conversation(body.conversation_id)
         async with conv.lock:
-            result = await agent.turn(conv, text)
+            try:
+                result = await agent.turn(conv, text)
+            finally:
+                # Bound stored history, not merely the subset sent to the provider.
+                conv.messages[:] = agent._window(conv.messages)[1:]
+                conv.last_used = time.monotonic()
         return {
             "request_id": request.scope["b_request_id"], "retrieved_at": utc_now().isoformat(),
             "status": "ok", "case_id": conv.session.case_id, "error": None,

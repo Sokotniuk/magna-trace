@@ -1,0 +1,59 @@
+{
+  "input_zip_sha256": "ab3f7e35a8c29973c26a6b0159b9296e85d5b959b4bf59cc77ab6d3e8b0bd56a",
+  "git_history": "absent in input archive",
+  "frontend_and_b2_and_a_modules": "byte-identical to latest ZIP",
+  "changed_files": {
+    "agent/auth.py": {
+      "original_sha256": "2094185f6009390d5f10dadaae14c1b2e026a163f61fbab3bd3b9553123fd56b",
+      "final_sha256": "b96ee2140e005b34e6986035c173b359e7d81a392cac340edfab163d4e10cfd0"
+    },
+    "agent/chat.py": {
+      "original_sha256": "118f834c41c2e7aa5cb28f8af3235c7251a79bb596f3cd1b8036818f056e9a34",
+      "final_sha256": "f84045213a609295cc498c73c9c69866e08340f473fade589d979904f8b763fd"
+    },
+    "agent/main.py": {
+      "original_sha256": "a25a202ec341a49377cc43fb3567eee336b7781858cbed924f7bd2bc24cd2987",
+      "final_sha256": "55328786114862e66928150323579e3ebb5cfdb58dbd2f7d990a25272ef301ba"
+    },
+    "agent/make_employees.py": {
+      "original_sha256": "164d8bc5d13152365c5cc8c1e4e7b0c2654b426e44a75ad31f8e7e6915d2b8a6",
+      "final_sha256": "213cd2a32086865eeb0d81cac73f27cbcb7c2ce7c3e101569cc2f3691a966378"
+    },
+    "agent/tools.py": {
+      "original_sha256": "810b3d02fa0856fbb5424c48334d163942afbd6e21dd054d94025e6b5541a7ea",
+      "final_sha256": "792a8fd744dcabe50508fc14d98e8fb1c96d8b6bad22392036ebb2a49990dcd6"
+    },
+    "audit_tests/test_independent_backend.py": {
+      "original_sha256": null,
+      "final_sha256": "46f3f6753d82d82eaa97c8fefd69643c3480545d3e6936d00b687e6bb27ac699"
+    },
+    "docs/FINAL_BACKEND_AUDIT.md": {
+      "original_sha256": null,
+      "final_sha256": "233dabe63b2ef036a72afc222650e44f68ed878db0212d1b0cd5ec4395c70872"
+    },
+    "student_b/answers.py": {
+      "original_sha256": "98331332c686c763e2b23c59adbe9d40883348a6950f63bbf2ec09c19ce019f4",
+      "final_sha256": "61d44511c7dd99e2f7db5f72f653cbe77b0b079d2badf900a2d0b1b33629be79"
+    },
+    "student_b/evidence.py": {
+      "original_sha256": "ab1f85b0e4bdd07f7c5f81f9a969984cc5376a0f1f70a5995d74afff6af07e08",
+      "final_sha256": "d18dee323f39ba58a6ae6d142c2d6cd16b927b7b5e5433ffac9dfe5c607a281e"
+    },
+    "student_b/main.py": {
+      "original_sha256": "f6e55f997c346261e63d18fc793d91f8e9a039e2f30b214b3376fa3bf1e1ab4e",
+      "final_sha256": "c856aeeb693a0ec97dc75c9659feefe0d1e5e79b15193a820c8ccb8dad9cd6fa"
+    },
+    "student_c/backend/app/oracle_repo.py": {
+      "original_sha256": "1665ca23da93b90fe28c57aaa914f1e2fdb651f79931c8e06777f2a71337ab9a",
+      "final_sha256": "87577f9842ca92c8675796fda619a7b62fc143e5bf25bfed1923385be91b6421"
+    },
+    "student_c/tests/test_audit_logging.py": {
+      "original_sha256": null,
+      "final_sha256": "0cfa0cf425023a6b2427afc45e88d63452b4d990700fff18331217ce92e7937e"
+    }
+  },
+  "unchanged_a": {
+    "backend/app/oracle_repo.py": "8aaaa27194467b1ba9238c657904a3b74d124acc6052022bbcb618a9b7d595ea",
+    "backend/app/measurements.py": "92457cd89a3cfc29ce4c6598df3c3031e35539008dd7b9285ba1d27f86dd0b08"
+  }
+}

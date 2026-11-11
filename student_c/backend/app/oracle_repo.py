@@ -25,8 +25,8 @@ class SourceTimeout(Exception):
 
 
 def _reason(exc: Exception) -> str:
-    """First line of the Oracle error (e.g. 'ORA-01017: invalid credential...'). Server log only."""
-    return str(exc).splitlines()[0] if str(exc) else type(exc).__name__
+    """Driver text may contain connection details; log only the exception type."""
+    return type(exc).__name__
 
 
 def _connect() -> oracledb.Connection:
@@ -38,7 +38,7 @@ def _connect() -> oracledb.Connection:
             tcp_connect_timeout=5,
         )
     except oracledb.Error as exc:
-        log.warning("Oracle connect failed (dsn=%s, user=%s): %s", settings.oracle_dsn, settings.oracle_user, _reason(exc))
+        log.warning("Oracle connect failed: %s", _reason(exc))
         raise SourceUnavailable(type(exc).__name__) from None
     conn.call_timeout = settings.oracle_call_timeout_ms
     return conn

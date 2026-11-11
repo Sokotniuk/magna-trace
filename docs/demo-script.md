@@ -24,7 +24,7 @@ dashboard and stay as they are. Timings below are a plan, not a measured rehears
 | 1:00–1:20 | Click any blue evidence ID in the reply (`E-…`). Close with **Close** or Esc. | "Every value resolves to the captured source row: raw value, limits, fail code, time." |
 | 1:20–1:50 | Type: **"Yes, the fixture was re-clamped at the start of the shift."** | "The answer is stored as technician evidence under my name; observations are not changed." |
 | 1:50–2:20 | Click **"Give me a handover for the next shift."**, then **Print handover** (cancel the print dialog). | "The next shift gets findings, my report, open questions and the next check." |
-| 2:20–2:45 | Type: **"Which part should I replace?"** | "No repair advice without an approved procedure — it offers a data check or escalation instead." |
+| 2:20–2:45 | Type: **"Which part should I replace?"** | "No repair advice and no free model prose: the answer is a fixed backend text that lists what TRACE can do (audit F01)." |
 | 2:45–3:00 | Point at the status chip and the sign-in name. | "Read-only database user, fixed SQL, every fact traceable. Copilot Studio can connect through `/mcp`." |
 
 Second run: press **New conversation** and repeat. A fresh case gets new evidence IDs.

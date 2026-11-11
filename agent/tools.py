@@ -100,13 +100,17 @@ class Toolbox:
         return get
 
     @staticmethod
-    def _failed(envelope: dict) -> tuple[str, dict]:
+    def _failed(envelope: dict, session: Session | None = None) -> tuple[str, dict]:
         code = (envelope.get("error") or {}).get("code", "SOURCE_UNAVAILABLE")
+        if session is not None and code == "CASE_NOT_FOUND_OR_EXPIRED":
+            session.case_id = session.question_id = None
         return render.error(envelope), {"status": "error", "code": code}
 
     # --- tools ---------------------------------------------------------------
 
     async def open_case(self, session: Session, station_number: str, **scope) -> tuple[str, dict]:
+        # A failed scope switch must not leave an old question as the answer target.
+        session.case_id = session.question_id = None
         body = {"station_number": str(station_number).strip().upper()}
         body.update({k: v for k, v in scope.items() if k in ("from", "to", "serial_number") and v})
         envelope = await self._call("POST", "/api/v1/cases", json=body)
@@ -133,16 +137,18 @@ class Toolbox:
         value = str(raw).translate(_DASHES).strip().strip("`'\" ")
         if _EVIDENCE.match(value.lower().replace("e-", "E-", 1)):
             return value.lower().replace("e-", "E-", 1)
-        tail = re.search(r"(\d+)$", value)  # a bare or shortened number refers to the active case
+        tail = re.fullmatch(r"([1-9][0-9]*)", value)  # explicit local ordinal only, never repair an invented ID
         return f"E-{session.case_id}-{int(tail.group(1))}" if tail and session.case_id else value
 
     async def get_evidence(self, session: Session, evidence_id: str) -> tuple[str, dict]:
         if not session.case_id:
             return "There is no active case yet. Tell me which station to investigate.", {"status": "error", "code": "NO_ACTIVE_CASE"}
         eid = self._resolve_evidence(session, evidence_id)
+        if not _EVIDENCE.fullmatch(eid):
+            return self._failed({"error": {"code": "EVIDENCE_NOT_FOUND"}}, session)
         envelope = await self._call("GET", f"/api/v1/cases/{session.case_id}/evidence/{eid}")
         if envelope.get("status") != "ok":
-            return self._failed(envelope)
+            return self._failed(envelope, session)
         item = envelope["data"]
         return render.evidence(item, self.lookup(session.case_id)), {
             "status": "ok", "shown_to_technician": True, "request_id": envelope["request_id"],
@@ -155,7 +161,7 @@ class Toolbox:
         envelope = await self._call("POST", f"/api/v1/cases/{session.case_id}/answers",
                                     json={"question_id": session.question_id, "answer_text": str(answer_text).strip()})
         if envelope.get("status") != "ok":
-            return self._failed(envelope)
+            return self._failed(envelope, session)
         snap = envelope["data"]
         session.question_id = None
         return render.answer(snap), {
@@ -167,7 +173,7 @@ class Toolbox:
             return "There is no active case yet. Tell me which station to investigate.", {"status": "error", "code": "NO_ACTIVE_CASE"}
         envelope = await self._call("GET", f"/api/v1/cases/{session.case_id}/handover")
         if envelope.get("status") != "ok":
-            return self._failed(envelope)
+            return self._failed(envelope, session)
         return render.handover(session.case_id, envelope["data"], self.lookup(session.case_id)), {
             "status": "ok", "shown_to_technician": True, "request_id": envelope["request_id"]}
 

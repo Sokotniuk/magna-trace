@@ -40,6 +40,8 @@ def create_app(settings: Settings | None = None, source: DataSource | None = Non
         if len(keys) != 1 or not key_ok(keys[0]):
             raise Failure("UNAUTHORIZED", "Valid connector credentials are required", 401)
 
+        app.state.authenticate(request, keys[0])
+
     # Demo employee sign-in in front of every /api/v1 route (decision D34). Appended after
     # B's RequestBoundary, so it runs inside it and its 401 keeps B's envelope and request ID.
     auth = auth or Auth(Directory.load())
@@ -56,9 +58,14 @@ def create_app(settings: Settings | None = None, source: DataSource | None = Non
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
-        async with mcp.session_manager.run():
-            yield
-        await toolbox.aclose()
+        try:
+            async with mcp.session_manager.run():
+                yield
+        finally:
+            try:
+                await agent.aclose()
+            finally:
+                await toolbox.aclose()
 
     app.router.lifespan_context = lifespan
     # Serves /mcp. Mounted last so it only receives paths no REST route matched.

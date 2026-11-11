@@ -27,7 +27,7 @@ WORDS = ["axle", "rotor", "gear", "torque", "spindle", "valve", "sensor", "clamp
 
 
 def demo_password() -> str:
-    return f"{secrets.choice(WORDS)}-{secrets.choice(WORDS)}-{secrets.randbelow(9000) + 1000}"
+    return secrets.token_urlsafe(18)  # 144 random bits; hashes are distributed with the demo.
 
 
 def main() -> None:
