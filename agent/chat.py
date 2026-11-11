@@ -76,6 +76,9 @@ class ChatAgent:
         self.toolbox, self.config = toolbox, config
         self._client = client
         self._conversations: dict[str, Conversation] = {}
+        # Outcome of the latest model call, for the dashboard status chip (no extra model calls).
+        self.last_model_ok: str | None = None
+        self.last_model_error: str | None = None
 
     def _model_client(self):
         if self._client is None:
@@ -139,7 +142,9 @@ class ChatAgent:
         conv.messages.append({"role": "user", "content": text})
         try:
             response, served = await self._complete(self._window(conv.messages))
+            self.last_model_ok, self.last_model_error = utc_now().isoformat(), None
         except ModelUnavailable as exc:
+            self.last_model_error = utc_now().isoformat()
             del conv.messages[start:]
             return {"reply": "The language model is not available right now (rate limit or provider problem). "
                              "Nothing was changed; please send your message again in a moment.",
@@ -203,6 +208,25 @@ def make_chat_router(agent: ChatAgent, authenticate) -> APIRouter:
             "status": "ok", "case_id": conv.session.case_id, "error": None,
             "data": {"conversation_id": conv.conversation_id, **result,
                      "open_question": conv.session.question_id is not None},
+        }
+
+    @router.get("/status", operation_id="status")
+    def status(request: Request):
+        """Readiness for the dashboard chip: Oracle via the read-only count, model from the last call."""
+        authenticate(request)
+        try:
+            count = request.app.state.source.count_measurements()
+            oracle = "ok" if type(count) is int and count >= 0 else "error"
+        except Exception:
+            oracle = "error"
+        model = ("not_configured" if not agent.config.enabled else
+                 "error" if agent.last_model_error and (agent.last_model_ok or "") < agent.last_model_error else
+                 "ok" if agent.last_model_ok else "unused")
+        return {
+            "request_id": request.scope["b_request_id"], "retrieved_at": utc_now().isoformat(),
+            "status": "ok", "case_id": None, "error": None,
+            "data": {"oracle": oracle, "model": model, "last_model_ok": agent.last_model_ok,
+                     "last_model_error": agent.last_model_error},
         }
 
     return router

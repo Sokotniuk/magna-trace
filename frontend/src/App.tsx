@@ -8,6 +8,7 @@ import CaseDetails from './CaseDetails'
 import ChatPanel from './ChatPanel'
 import Overview from './Overview'
 import StationPicker from './StationPicker'
+import SystemStatus from './SystemStatus'
 import TeamFooter from './TeamFooter'
 export { FindingsTable } from './FindingsTable'
 
@@ -82,7 +83,7 @@ export default function App({ session, onSignOut }: { session?: SignedIn; onSign
           : <p className="event-tag">MAGNA Hackathon · Košice 2026 · Task 9</p>}
         <p className="synthetic-banner">{isMockMode
           ? 'SYNTHETIC ONLY — pinned B2 candidate fixtures. Backend integration pending.'
-          : 'LIVE API mode — Oracle data through the backend. No mock fallback.'}</p>
+          : <>LIVE API mode · no mock fallback {session && <SystemStatus />}</>}</p>
       </header>
 
       {!isMockMode && <ChatPanel />}

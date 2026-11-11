@@ -3,6 +3,7 @@ import { ApiError, getEvidence, getHandover } from './api'
 import type { Evidence, Handover, Snapshot } from './api'
 import { EvidenceReference, FindingsTable } from './FindingsTable'
 import { apiLabel, isMockMode, sourceLabel } from './api-mode'
+import { printOnly } from './print'
 
 function RequestError({ error }: { error: ApiError }) {
   return <div className="error-panel" role="alert">
@@ -40,6 +41,7 @@ export function EvidenceDetails({ evidence, onEvidence }: { evidence: Evidence; 
 export function HandoverDetails({ handover, onEvidence }: { handover: Handover; onEvidence: (id: string) => void }) {
   return <article id="handover-details">
     <h4>{sourceLabel} handover — {handover.scope.station_number}</h4>
+    <button type="button" className="secondary print-button" onClick={() => printOnly(document.getElementById('handover-details'))}>Print handover</button>
     <p>Observations retrieved at: <code>{handover.observations_retrieved_at}</code></p>
     <h4>Queried scope and coverage</h4>
     <pre className="returned-json">{JSON.stringify(handover.scope, null, 2)}</pre>

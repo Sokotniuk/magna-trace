@@ -108,3 +108,11 @@ def test_missing_employee_file_means_nobody_can_sign_in(tmp_path):
     empty = Directory.load(tmp_path / "absent.json")
     c, headers = client(Auth(empty))
     assert login(c, headers).status_code == 401
+
+
+def test_status_reports_oracle_and_model_without_calling_the_model():
+    c, headers = client()
+    assert c.get("/api/v1/status", headers=headers).status_code == 401  # behind the sign-in
+    assert login(c, headers).status_code == 200
+    data = c.get("/api/v1/status", headers=headers).json()["data"]
+    assert data["oracle"] == "ok" and data["model"] == "not_configured"

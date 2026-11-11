@@ -1,4 +1,7 @@
-import { reportSignedOut } from './api'
+import { ApiError, getEvidence, reportSignedOut } from './api'
+import type { Evidence } from './api'
+import { EvidenceDetails } from './CaseDetails'
+import { printOnly } from './print'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 
@@ -15,9 +18,19 @@ const SUGGESTIONS = [
   'Give me a handover for the next shift.',
 ]
 
-function inline(text: string): ReactNode[] {
+const EVIDENCE_ID = /^E-([0-9a-f]{32})-[1-9][0-9]*$/
+type OpenEvidence = (id: string) => void
+
+function inline(text: string, onEvidence?: OpenEvidence): ReactNode[] {
   return text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g).map((part, index) => {
-    if (part.startsWith('`') && part.endsWith('`') && part.length > 2) return <code key={index}>{part.slice(1, -1)}</code>
+    if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+      const value = part.slice(1, -1)
+      // Evidence IDs issued by the backend open their captured snapshot in place.
+      return onEvidence && EVIDENCE_ID.test(value)
+        ? <button key={index} type="button" className="evidence-link chat-evidence-link" title={`Open evidence ${value}`}
+            aria-controls="chat-evidence" onClick={() => onEvidence(value)}><code>{value}</code></button>
+        : <code key={index}>{value}</code>
+    }
     if (part.startsWith('**') && part.endsWith('**') && part.length > 4) return <strong key={index}>{part.slice(2, -2)}</strong>
     return part
   })
@@ -28,7 +41,7 @@ function cells(line: string): string[] {
 }
 
 // Minimal renderer for the backend's text: tables, bullet lists and paragraphs.
-function Blocks({ text }: { text: string }) {
+function Blocks({ text, onEvidence }: { text: string; onEvidence?: OpenEvidence }) {
   const lines = text.split('\n')
   const blocks: ReactNode[] = []
   for (let i = 0; i < lines.length;) {
@@ -39,15 +52,15 @@ function Blocks({ text }: { text: string }) {
       const body = rows.filter((row) => !/^\|[\s|:-]+\|?$/.test(row.trim()))
       const [head, ...rest] = body
       blocks.push(<div className="chat-table" key={blocks.length}><table>
-        <thead><tr>{cells(head).map((cell, index) => <th key={index}>{inline(cell)}</th>)}</tr></thead>
-        <tbody>{rest.map((row, r) => <tr key={r}>{cells(row).map((cell, index) => <td key={index}>{inline(cell)}</td>)}</tr>)}</tbody>
+        <thead><tr>{cells(head).map((cell, index) => <th key={index}>{inline(cell, onEvidence)}</th>)}</tr></thead>
+        <tbody>{rest.map((row, r) => <tr key={r}>{cells(row).map((cell, index) => <td key={index}>{inline(cell, onEvidence)}</td>)}</tr>)}</tbody>
       </table></div>)
     } else if (line.trim().startsWith('- ')) {
       const items: string[] = []
       while (i < lines.length && lines[i].trim().startsWith('- ')) items.push(lines[i++].trim().slice(2))
-      blocks.push(<ul key={blocks.length}>{items.map((item, index) => <li key={index}>{inline(item)}</li>)}</ul>)
+      blocks.push(<ul key={blocks.length}>{items.map((item, index) => <li key={index}>{inline(item, onEvidence)}</li>)}</ul>)
     } else {
-      if (line.trim()) blocks.push(<p key={blocks.length}>{inline(line)}</p>)
+      if (line.trim()) blocks.push(<p key={blocks.length}>{inline(line, onEvidence)}</p>)
       i += 1
     }
   }
@@ -60,6 +73,34 @@ export default function ChatPanel() {
   const [busy, setBusy] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [caseId, setCaseId] = useState<string | null>(null)
+  const [viewer, setViewer] = useState<{ id: string; loading: boolean; evidence?: Evidence; error?: string } | null>(null)
+  const viewerRequest = useRef<AbortController | null>(null)
+  const closeButton = useRef<HTMLButtonElement>(null)
+
+  // The case is read from the ID itself, so evidence from an earlier case in this chat still resolves.
+  async function openEvidence(id: string) {
+    const match = EVIDENCE_ID.exec(id)
+    if (!match) return
+    viewerRequest.current?.abort()
+    const controller = new AbortController()
+    viewerRequest.current = controller
+    setViewer({ id, loading: true })
+    window.setTimeout(() => closeButton.current?.focus(), 0)
+    try {
+      const evidence = await getEvidence(match[1], id, controller.signal)
+      if (!controller.signal.aborted) setViewer({ id, loading: false, evidence })
+    } catch (reason: unknown) {
+      if (!controller.signal.aborted) {
+        const message = reason instanceof ApiError ? `${reason.code ? `${reason.code}: ` : ''}${reason.message}` : 'Could not reach the API.'
+        setViewer({ id, loading: false, error: message })
+      }
+    }
+  }
+
+  function closeEvidence() {
+    viewerRequest.current?.abort()
+    setViewer(null)
+  }
   const end = useRef<HTMLDivElement>(null)
 
   useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }) }, [messages, busy])
@@ -91,6 +132,7 @@ export default function ChatPanel() {
       setMessages((current) => [...current, { role: 'problem', text: 'Could not reach the chat service. Check the backend and proxy. Nothing was assumed.' }])
     } finally {
       setBusy(false)
+      window.dispatchEvent(new Event('trace:chat-turn'))  // refresh the model status chip
     }
   }
 
@@ -115,12 +157,14 @@ export default function ChatPanel() {
         </div>}
         {messages.map((message, index) => <article key={index} className={`chat-message ${message.role}`}>
           <header>{message.role === 'technician' ? 'Technician' : message.role === 'trace' ? 'TRACE' : 'Problem'}</header>
-          {message.role === 'trace' ? <Blocks text={message.text} /> : <p>{message.text}</p>}
+          {message.role === 'trace' ? <Blocks text={message.text} onEvidence={openEvidence} /> : <p>{message.text}</p>}
           {message.role === 'trace' && <footer>
             {message.tools && message.tools.length > 0
               ? message.tools.map((tool, i) => <span key={i}>tool <code>{tool.name}</code> → {tool.status}{tool.code ? ` (${tool.code})` : ''}{tool.request_id ? <> · request <code>{tool.request_id}</code></> : null}</span>)
               : <span>no tool called</span>}
             {message.model && <span> · model <code>{message.model}</code></span>}
+            {message.text.startsWith('**MAGNA TRACE handover') && <button type="button" className="secondary print-button"
+              onClick={(event) => printOnly(event.currentTarget.closest('article'))}>Print handover</button>}
           </footer>}
         </article>)}
         {busy && <p role="status">TRACE is working…</p>}
@@ -136,6 +180,18 @@ export default function ChatPanel() {
         </div>
       </form>
       {caseId && <p className="scope-note">Active case: <code>{caseId}</code></p>}
+      {viewer && <div id="chat-evidence" className="chat-evidence" role="dialog" aria-modal="false" aria-labelledby="chat-evidence-heading"
+        onKeyDown={(event) => { if (event.key === 'Escape') closeEvidence() }}>
+        <div className="chat-evidence-bar">
+          <h4 id="chat-evidence-heading">Evidence <code>{viewer.id}</code></h4>
+          <button type="button" className="secondary" ref={closeButton} onClick={closeEvidence}>Close</button>
+        </div>
+        <div className="chat-evidence-body" aria-busy={viewer.loading}>
+          {viewer.loading && <p role="status">Loading the captured snapshot…</p>}
+          {viewer.error && <p className="login-error" role="alert">{viewer.error} No substitute data is shown.</p>}
+          {viewer.evidence && <EvidenceDetails evidence={viewer.evidence} onEvidence={openEvidence} />}
+        </div>
+      </div>}
     </section>
   )
 }
