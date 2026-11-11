@@ -53,13 +53,19 @@ export default function App() {
   }
 
   return (
-    <main className="dashboard">
+    <main className={isMockMode ? 'dashboard mock' : 'dashboard live'}>
       <header>
-        <h1>MAGNA TRACE</h1>
-        <h2>Diagnostic Dashboard</h2>
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true" />
+          <div>
+            <h1>MAGNA TRACE</h1>
+            <h2>Diagnostic Dashboard · evidence-driven assistant for test technicians</h2>
+          </div>
+        </div>
+        <p className="event-tag">MAGNA Hackathon · Košice 2026 · Task 9</p>
         <p className="synthetic-banner">{isMockMode
           ? 'SYNTHETIC ONLY — pinned B2 candidate fixtures. Backend integration pending.'
-          : 'LIVE API mode — backend responses only. No mock fallback. Integration verification pending.'}</p>
+          : 'LIVE API mode — Oracle data through the backend. No mock fallback.'}</p>
       </header>
 
       {!isMockMode && <ChatPanel />}
