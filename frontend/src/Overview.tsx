@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getStationOverview } from './api'
-import type { Station, StationOverview } from './api'
+import { getPatterns, getStationOverview } from './api'
+import type { PatternSummary, Station, StationOverview } from './api'
 
 // Shown before a case is opened. Steps are a static guide to the P0 journey; tiles list the
 // stations as the API returned them. The outline uses the backend's out-of-range counts
@@ -20,6 +20,17 @@ export default function Overview({ stations, selected, disabled, onOpen }: {
 }) {
   const [counts, setCounts] = useState<Map<string, StationOverview> | null>(null)
   const [countsError, setCountsError] = useState(false)
+  const [pattern, setPattern] = useState<PatternSummary | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    getPatterns(controller.signal).then((items) => setPattern(items[0] ?? null)).catch(() => undefined)
+    return () => controller.abort()
+  }, [])
+
+  function analyzeInChat() {
+    window.dispatchEvent(new CustomEvent('trace:prefill-chat', { detail: 'Analyze error patterns across all stations.' }))
+  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -45,11 +56,18 @@ export default function Overview({ stations, selected, disabled, onOpen }: {
       </ol>
 
       <h3 id="tiles-heading">Stations <span className="tiles-count">{stations.length} returned · click to open a case</span></h3>
-      <p className="tiles-legend">
+      {pattern && <div className="pattern-alert" role="status">
+        <span className="pattern-text">
+          <strong>Same error on {pattern.stations.length} stations</strong> in {pattern.waves.length} wave{pattern.waves.length === 1 ? '' : 's'}:
+          {' '}{pattern.waves.join(' · ')}
+        </span>
+        <button type="button" onClick={analyzeInChat}>Analyze in chat</button>
+      </div>}
+      {!pattern && <p className="tiles-legend">
         {counts
           ? <><span className="legend-swatch" aria-hidden="true" /> {flagged} {flagged === 1 ? 'station has' : 'stations have'} recorded values outside their limits (outlined; “5 out” = five values). A count, not a diagnosis.</>
           : countsError ? 'Out-of-range counts are unavailable; stations are listed without them.' : 'Counting recorded range statuses…'}
-      </p>
+      </p>}
       {stations.length > 0 && <ul className="station-tiles" aria-labelledby="tiles-heading">
         {stations.map((station, index) => {
           const count = counts?.get(station.station_number)

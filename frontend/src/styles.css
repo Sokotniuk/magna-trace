@@ -678,6 +678,18 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
 .station-tile:disabled { opacity: 0.55; cursor: progress; }
 .tile-number { font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; }
 .tile-count { font-size: 0.75rem; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+/* Cross-station pattern alert (D42): numbers come from the backend summary. */
+.pattern-alert {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  margin: 0 0 var(--space-2); padding: var(--space-2) var(--space-3);
+  border: 1px solid #fecaca; border-left: 5px solid var(--color-accent); background: var(--red-50);
+  font-size: 0.8rem; color: var(--graphite-900);
+}
+.pattern-text { flex: 1 1 18rem; }
+/* keep the one-screen layout when the alert is shown: step titles stay, step descriptions hide */
+.overview:has(.pattern-alert) .journey-text { display: none; }
+.pattern-alert button { min-height: 0; padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+
 /* Stations with recorded out-of-range values: outlined and labelled (count from the backend). */
 .station-tile.has-breach {
   border: 2px solid var(--color-accent);

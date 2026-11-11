@@ -275,3 +275,27 @@ export async function getStationOverview(signal?: AbortSignal): Promise<StationO
   }
   return stations as StationOverview[]
 }
+
+export type PatternSummary = {
+  stations: string[]
+  lines: string[]
+  events: number
+  first: string
+  last: string
+  gaps_min: number[]
+  regular: boolean
+  single_test_each: boolean
+  waves: string[]
+}
+
+// Cross-station patterns computed by the backend (D42); the dashboard only displays them.
+export async function getPatterns(signal?: AbortSignal): Promise<PatternSummary[]> {
+  const body = await request('/api/v1/analysis/patterns', { signal })
+  const items = object(body.data) ? body.data.patterns : null
+  if (!Array.isArray(items) || !items.every((p) => object(p) && strings(p.stations) && strings(p.lines) &&
+      typeof p.events === 'number' && typeof p.first === 'string' && typeof p.last === 'string' &&
+      Array.isArray(p.gaps_min) && p.gaps_min.every((g) => typeof g === 'number') && strings(p.waves))) {
+    throw new ApiError('Unexpected pattern response.')
+  }
+  return items as PatternSummary[]
+}

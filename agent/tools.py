@@ -4,6 +4,7 @@ Calls go through the real ASGI app (same validation, auth, envelopes and error h
 other client). Each tool returns (text for the technician, compact result for the model).
 """
 
+import asyncio
 import re
 
 import httpx
@@ -60,6 +61,13 @@ TOOL_SPECS = [
         "parameters": {"type": "object", "properties": {
             "q": {"type": "string", "description": "Optional case-sensitive part of the station identifier"},
         }}}},
+    {"type": "function", "function": {
+        "name": "analyze_patterns",
+        "description": "Analyze all stations for the same error repeating on several stations or at a regular rhythm, "
+                       "explain the likely common cause and give one action plan for all affected stations. Call it "
+                       "when the technician asks whether an error happens elsewhere, asks for patterns, trends, "
+                       "common causes, or how to fix it on all stations.",
+        "parameters": {"type": "object", "properties": {}}}},
 ]
 
 
@@ -127,6 +135,10 @@ class Toolbox:
         text = render.snapshot(case_id, snap, self.lookup(case_id))
         # D41: likely causes and actions for out-of-range findings, placed before the question.
         block = guidance.diagnosis_block(guidance.case_rows(self._app.state.cases, case_id), snap["findings"])
+        # D42: point to the same error signature on other stations, if there is one.
+        analyzer = getattr(self._app.state, "patterns", None)
+        if analyzer is not None:
+            block += analyzer.hint_for(self._app.state.source, snap["scope"]["station_number"])
         if block:
             marker = "\n\n**Question for you:**"
             text = text.replace(marker, block + marker, 1) if marker in text else text + block
@@ -264,10 +276,25 @@ class Toolbox:
             "status": "ok", "shown_to_technician": True, "request_id": envelope["request_id"],
             "stations": [s["station_number"] for s in envelope["data"]["stations"]]}
 
+    async def analyze_patterns(self, session: Session) -> tuple[str, dict]:
+        """D42: the same error on several stations → common cause and one plan for all of them."""
+        from . import patterns as pattern_module
+        analyzer = getattr(self._app.state, "patterns", None)
+        if analyzer is None:
+            return "Cross-station analysis is not available.", {"status": "error", "code": "SOURCE_UNAVAILABLE"}
+        try:
+            found = await asyncio.to_thread(analyzer.patterns, self._app.state.source)
+        except Exception:
+            return ("**SOURCE_UNAVAILABLE.** The stations could not be read for the analysis; nothing was assumed.",
+                    {"status": "error", "code": "SOURCE_UNAVAILABLE"})
+        return pattern_module.render(found), {
+            "status": "ok", "shown_to_technician": True, "patterns": len(found),
+            "stations": found[0]["stations"] if found else []}
+
     async def run(self, session: Session, name: str, args: dict) -> tuple[str, dict]:
         handlers = {"open_case": self.open_case, "get_evidence": self.get_evidence,
                     "record_answer": self.record_answer, "get_handover": self.get_handover,
-                    "list_stations": self.list_stations}
+                    "list_stations": self.list_stations, "analyze_patterns": self.analyze_patterns}
         if name not in handlers:
             return f"Unknown tool {name}.", {"status": "error", "code": "UNKNOWN_TOOL"}
         # Models sometimes add arguments a tool does not take (e.g. a case_id); ignore those.
