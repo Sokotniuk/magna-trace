@@ -217,12 +217,13 @@ def test_evidence_id_copied_from_the_dashboard_continues_that_case(monkeypatch):
         headers = {"X-API-Key": client.app.state.settings.api_key}
         opened = client.post("/api/v1/cases", json={"station_number": "SYNTHETIC-STATION"}, headers=headers).json()
         case_id, calc = opened["case_id"], opened["data"]["findings"][0]["calculation_evidence_id"]
-        client.app.state.agent._client = FakeModel(("get_evidence", {"evidence_id": calc}),
-                                                   ("record_answer", {"answer_text": "ignored model text"}))
+        model = FakeModel(("record_answer", {"answer_text": "ignored model text"}))
+        client.app.state.agent._client = model
         first = say(client, headers, f"Where does {calc} come from?")
         assert f"Continuing with case `{case_id}` from the dashboard." in first["data"]["reply"]
         assert f"`{calc}` **(CALCULATED)**" in first["data"]["reply"] and first["case_id"] == case_id
         assert first["data"]["open_question"] is True  # the dashboard case's question is now open in chat
+        assert model.seen == [] and first["data"]["model"] is None  # answered without asking the model
         answered = say(client, headers, "No change on the fixture.", first["data"]["conversation_id"])["data"]
         assert "Recorded your answer as technician report" in answered["reply"]
 
@@ -232,7 +233,8 @@ def test_pasted_dashboard_id_selects_the_case_even_if_the_model_names_the_measur
         headers = {"X-API-Key": client.app.state.settings.api_key}
         opened = client.post("/api/v1/cases", json={"station_number": "SYNTHETIC-STATION"}, headers=headers).json()
         case_id, calc = opened["case_id"], opened["data"]["findings"][0]["calculation_evidence_id"]
-        client.app.state.agent._client = FakeModel(("get_evidence", {"measurement": "SYNTHETIC Torque"}))
+        # The model would open another station (seen in rehearsal); a pasted ID never reaches it.
+        client.app.state.agent._client = FakeModel(("open_case", {"station_number": "ST3003"}))
         reply = say(client, headers, f"{calc} — where does this deviation come from?")["data"]["reply"]
         assert reply.startswith(f"Continuing with case `{case_id}` from the dashboard.")
         assert f"`{calc}` **(CALCULATED)**" in reply

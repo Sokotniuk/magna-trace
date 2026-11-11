@@ -155,10 +155,16 @@ class Toolbox:
         field = "evidence_id" if kind == "observation" else "calculation_evidence_id"
         return [getattr(f, field) for f in findings if " ".join(f.measurement.split()).casefold() == wanted]
 
-    def adopt_from_text(self, session: Session, text: str) -> str | None:
-        """First canonical evidence ID in a technician message, if its case exists (web chat only)."""
-        found = re.search(r"\b[Ee]-[0-9a-f]{32}-[1-9][0-9]*\b", str(text).translate(_DASHES))
-        return self._adopt_case(session, found.group(0)) if found else None
+    def evidence_id_in_text(self, session: Session, text: str) -> str | None:
+        """Full evidence ID in a technician message whose case exists (web chat only, D38).
+        A different existing case becomes the active one; IDs of unknown cases are ignored."""
+        found = re.search(r"\b[Ee]-([0-9a-f]{32})-[1-9][0-9]*\b", str(text).translate(_DASHES))
+        if not found:
+            return None
+        eid = "E-" + found.group(0)[2:]
+        if found.group(1) == session.case_id or self._adopt_case(session, eid):
+            return eid
+        return None
 
     def _adopt_case(self, session: Session, evidence_id: str | None) -> str | None:
         """Web chat only (D38): a full evidence ID copied from the dashboard names its case. If that case

@@ -160,12 +160,20 @@ class ChatAgent:
     async def turn(self, conv: Conversation, text: str) -> dict:
         # D38: a full evidence ID pasted from the dashboard selects its (existing) case before the model
         # runs, so the model's choice of arguments cannot lose it. Unknown cases are not adopted.
-        adopted = self.toolbox.adopt_from_text(conv.session, text)
-        if adopted:
-            result = await self._model_turn(conv, text)
-            note = f"Continuing with case `{adopted}` from the dashboard."
-            return {**result, "reply": f"{note}\n\n{result['reply']}"}
-        return await self._model_turn(conv, text)
+        before = conv.session.case_id
+        eid = self.toolbox.evidence_id_in_text(conv.session, text)
+        if eid is None:
+            return await self._model_turn(conv, text)
+        # A pasted evidence ID is answered deterministically: the model is not asked, so it cannot pick
+        # another tool or station (seen in rehearsal: a pasted ST1003 ID made the model open ST3003).
+        shown, compact = await self.toolbox.get_evidence(conv.session, eid)
+        if conv.session.case_id != before:
+            shown = f"Continuing with case `{conv.session.case_id}` from the dashboard.\n\n{shown}"
+        conv.messages.append({"role": "user", "content": text})
+        conv.messages.append({"role": "assistant", "content": f"{SHOWN} (evidence {eid}, {compact.get('status')})"})
+        return {"reply": shown, "model": None, "tool_calls": [
+            {"name": "get_evidence", "status": compact.get("status"), "code": compact.get("code"),
+             "request_id": compact.get("request_id")}]}
 
     async def _model_turn(self, conv: Conversation, text: str) -> dict:
         start = len(conv.messages)
