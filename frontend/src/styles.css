@@ -598,7 +598,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-2);
-  margin: 0 0 var(--space-5);
+  margin: 0 0 var(--space-3);
   padding: 0;
   list-style: none;
   counter-reset: none;
@@ -667,6 +667,30 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
 .station-tile:disabled { opacity: 0.55; cursor: progress; }
 .tile-number { font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; }
 .tile-count { font-size: 0.75rem; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+/* Stations with recorded out-of-range values: outlined and labelled (count from the backend). */
+.station-tile.has-breach {
+  border: 2px solid var(--color-accent);
+  border-left-width: 5px;
+  background: var(--red-50);
+  box-shadow: 0 0 0 3px rgb(220 38 38 / 0.12);
+}
+.station-tile.has-breach:hover:not(:disabled) { background: var(--red-50); border-color: var(--color-accent-strong); }
+.station-tile.has-breach { grid-template-columns: 1fr auto; column-gap: var(--space-2); align-items: center; }
+.station-tile.has-breach .tile-count { grid-column: 1 / -1; }
+.tile-breach {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: end;
+  white-space: nowrap;
+  padding: 0.05rem 0.4rem;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.tiles-legend { display: flex; align-items: center; gap: var(--space-2); margin: calc(-1 * var(--space-1)) 0 var(--space-3); font-size: 0.78rem; color: var(--color-text-muted); }
+.legend-swatch { width: 0.9rem; height: 0.9rem; flex: none; border: 2px solid var(--color-accent); background: var(--red-50); }
 @keyframes tile-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 @media (max-width: 720px) {
@@ -709,6 +733,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
   .dashboard:has(> .chat) > section[aria-labelledby="station-heading"] { grid-row: 2; }
   .dashboard:has(> .chat) > section.error-panel { grid-row: 3; }
   .dashboard:has(> .chat) > section.overview { grid-row: 4; min-height: 0; overflow-y: auto; margin-bottom: 0; }
+  .dashboard:has(> .chat) .overview .station-tile { min-height: 3.1rem; padding-top: 0.4rem; padding-bottom: 0.4rem; }
   .dashboard:has(> .chat) > section[aria-labelledby="findings-heading"] { grid-row: 4; min-height: 0; overflow-y: auto; margin-bottom: 0; }
   .dashboard:has(> .chat) > .team-footer { grid-column: 2; grid-row: 5; margin-top: var(--space-2); }
 

@@ -55,7 +55,8 @@ def _next(action: dict) -> str:
 
 def _finding_rows(findings: list[dict], lookup: Lookup) -> tuple[list[str], set[tuple]]:
     lines = [
-        "| Measurement | Serial | Recorded | Value | Limits | Status | Deviation | Fail code | Evidence | Calculation |",
+        # Decisive columns first, so they stay visible in a narrow chat; long identifiers last.
+        "| Measurement | Value | Limits | Status | Deviation | Fail code | Serial | Recorded | Evidence | Calculation |",
         "|---|---|---|---|---|---|---|---|---|---|",
     ]
     origins: set[tuple] = set()
@@ -64,9 +65,10 @@ def _finding_rows(findings: list[dict], lookup: Lookup) -> tuple[list[str], set[
         origins.add((raw.get("serial_number"), raw.get("BOOK_STAMP")))
         unit = f" {f['unit']}" if f.get("unit") else ""
         lines.append(
-            f"| {f['measurement']} | {_v(raw.get('serial_number'))} | {_v(raw.get('BOOK_STAMP'))} | "
-            f"{_v(f['raw_value'])}{unit} | {_v(f['raw_lower'])}..{_v(f['raw_upper'])} | {f['range_status']} | "
-            f"{_v(f['deviation'])} | {_v(f['raw_fail_code']) if f['raw_fail_code'] is not None else 'none'} | "
+            f"| {f['measurement']} | {_v(f['raw_value'])}{unit} | {_v(f['raw_lower'])} – {_v(f['raw_upper'])} | "
+            f"{f['range_status']} | {_v(f['deviation'])} | "
+            f"{_v(f['raw_fail_code']) if f['raw_fail_code'] is not None else 'none'} | "
+            f"{_v(raw.get('serial_number'))} | {_v(raw.get('BOOK_STAMP'))} | "
             f"`{f['evidence_id']}` | `{f['calculation_evidence_id']}` |")
     return lines, origins
 
@@ -118,7 +120,7 @@ def evidence(item: dict, lookup: Lookup) -> str:
             f"retrieved {item['retrieved_at']}",
             f"- {item['measurement']}: station {raw['station_number']}, serial {_v(raw.get('serial_number'))}, "
             f"recorded {_v(raw.get('BOOK_STAMP'))} (timezone unknown)",
-            f"- Raw value `{_v(raw.get('MEASURE_VALUE'))}`{unit}; recorded limits `{_v(raw.get('LOWER_LIMIT'))}`.."
+            f"- Raw value `{_v(raw.get('MEASURE_VALUE'))}`{unit}; recorded limits `{_v(raw.get('LOWER_LIMIT'))}` – "
             f"`{_v(raw.get('UPPER_LIMIT'))}`; fail code {code}",
         ])
     if cls == "CALCULATED":
@@ -130,7 +132,7 @@ def evidence(item: dict, lookup: Lookup) -> str:
             if raw:
                 unit = f" {raw['UNIT']}" if raw.get("UNIT") else ""
                 lines.append(f"- Input `{ref}`: raw value `{_v(raw.get('MEASURE_VALUE'))}`{unit}, recorded limits "
-                             f"`{_v(raw.get('LOWER_LIMIT'))}`..`{_v(raw.get('UPPER_LIMIT'))}`")
+                             f"`{_v(raw.get('LOWER_LIMIT'))}` – `{_v(raw.get('UPPER_LIMIT'))}`")
         flags = ", ".join(result["quality_flags"]) or "none"
         lines.append(f"- Result: {result['range_status']}, deviation **{_v(result['deviation'])}**; "
                      f"parsed value {_v(result['parsed_value'])}; quality flags: {flags}")

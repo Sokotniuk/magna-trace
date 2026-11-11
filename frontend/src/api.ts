@@ -251,3 +251,27 @@ export async function signIn(username: string, password: string): Promise<Signed
 export async function signOut(): Promise<void> {
   await fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => undefined)
 }
+
+export type StationOverview = {
+  station_number: string
+  record_count: number
+  captured_rows: number
+  truncated: boolean
+  above: number
+  below: number
+  not_evaluable: number
+  rows_with_fail_code: number
+  out_of_range_serials: number
+}
+
+// Counts computed by the backend with the case rules; the dashboard only displays them.
+export async function getStationOverview(signal?: AbortSignal): Promise<StationOverview[]> {
+  const body = await request('/api/v1/stations/overview', { signal })
+  const stations = object(body.data) ? body.data.stations : null
+  const numbers = ['record_count', 'captured_rows', 'above', 'below', 'not_evaluable', 'rows_with_fail_code', 'out_of_range_serials']
+  if (!Array.isArray(stations) || !stations.every((item) => object(item) && typeof item.station_number === 'string' &&
+      typeof item.truncated === 'boolean' && numbers.every((key) => typeof item[key] === 'number'))) {
+    throw new ApiError('Unexpected station overview response.')
+  }
+  return stations as StationOverview[]
+}

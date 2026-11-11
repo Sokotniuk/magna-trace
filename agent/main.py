@@ -19,6 +19,7 @@ from student_b.source import DataSource, Failure
 
 from .auth import Auth, Directory, EmployeeGate, make_auth_router
 from .chat import AgentConfig, ChatAgent, make_chat_router
+from .overview import make_overview_router
 from .mcp_server import KeyGuard, build_mcp
 from .tools import Toolbox
 
@@ -53,6 +54,8 @@ def create_app(settings: Settings | None = None, source: DataSource | None = Non
     agent = ChatAgent(toolbox, agent_config or AgentConfig.from_environment(), model_client)
     app.state.agent = agent
     app.include_router(make_chat_router(agent, authenticate))
+    # Per-station status counts for the dashboard tiles (D37); same source and rules as a case.
+    app.include_router(make_overview_router(authenticate, settings.row_limit))
 
     mcp = build_mcp(toolbox)
 

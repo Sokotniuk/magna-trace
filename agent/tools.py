@@ -31,12 +31,16 @@ TOOL_SPECS = [
         }, "required": ["station_number"]}}},
     {"type": "function", "function": {
         "name": "get_evidence",
-        "description": "Show the stored source behind one evidence ID of the active case. For 'where does this "
-                       "deviation come from' use the finding's calculation ID; for a raw value or limit use its "
-                       "evidence ID. Use only IDs from earlier tool results.",
+        "description": "Show the stored source behind a finding of the active case. Give either evidence_id "
+                       "(exactly as returned earlier) or the measurement name of a finding shown in the case table. "
+                       "For 'where does this deviation come from' use kind=calculation; for a raw value or limit "
+                       "use kind=observation.",
         "parameters": {"type": "object", "properties": {
             "evidence_id": {"type": "string", "description": "Evidence ID exactly as returned"},
-        }, "required": ["evidence_id"]}}},
+            "measurement": {"type": "string", "description": "Measurement name of a finding in the case table, e.g. 'Weld Time'"},
+            "kind": {"type": "string", "enum": ["calculation", "observation"],
+                     "description": "With measurement: calculation (deviation) or observation (raw row)"},
+        }, "required": []}}},
     {"type": "function", "function": {
         "name": "record_answer",
         "description": "Record the technician's reply to the open question of the active case. Call it every time "
@@ -140,9 +144,31 @@ class Toolbox:
         tail = re.fullmatch(r"([1-9][0-9]*)", value)  # explicit local ordinal only, never repair an invented ID
         return f"E-{session.case_id}-{int(tail.group(1))}" if tail and session.case_id else value
 
-    async def get_evidence(self, session: Session, evidence_id: str) -> tuple[str, dict]:
+    def _finding_evidence(self, case_id: str, measurement: str, kind: str) -> list[str]:
+        """IDs of displayed findings with exactly this measurement name (case-insensitive), from the stored snapshot."""
+        try:
+            with self._app.state.cases.locked(case_id) as case:
+                findings = case.snapshot.findings if case.snapshot is not None else ()
+        except Exception:
+            return []
+        wanted = " ".join(str(measurement).split()).casefold()
+        field = "evidence_id" if kind == "observation" else "calculation_evidence_id"
+        return [getattr(f, field) for f in findings if " ".join(f.measurement.split()).casefold() == wanted]
+
+    async def get_evidence(self, session: Session, evidence_id: str | None = None, measurement: str | None = None,
+                           kind: str = "calculation") -> tuple[str, dict]:
         if not session.case_id:
             return "There is no active case yet. Tell me which station to investigate.", {"status": "error", "code": "NO_ACTIVE_CASE"}
+        if not evidence_id and measurement:
+            # Resolved only against findings the backend already showed; nothing is guessed (audit F04).
+            matches = self._finding_evidence(session.case_id, measurement, kind)
+            if len(matches) != 1:
+                reason = ("is not among the findings shown for this case" if not matches
+                          else "appears in more than one finding; name the evidence ID from the table")
+                return (f"\"{measurement}\" {reason}.", {"status": "error", "code": "EVIDENCE_NOT_FOUND"})
+            evidence_id = matches[0]
+        if not evidence_id:
+            return ("Name the measurement or the evidence ID from the table.", {"status": "error", "code": "BAD_ARGUMENTS"})
         eid = self._resolve_evidence(session, evidence_id)
         if not _EVIDENCE.fullmatch(eid):
             return self._failed({"error": {"code": "EVIDENCE_NOT_FOUND"}}, session)
@@ -194,6 +220,9 @@ class Toolbox:
             return f"Unknown tool {name}.", {"status": "error", "code": "UNKNOWN_TOOL"}
         # Models sometimes add arguments a tool does not take (e.g. a case_id); ignore those.
         accepted = _ARGUMENTS[name]
+        if name == "get_evidence" and not args.get("evidence_id") and isinstance(args.get("calculation_id"), str):
+            # The compact case result names deviation sources "calculation_id"; models echo that name.
+            args = {**args, "evidence_id": args["calculation_id"], "kind": "calculation"}
         args = {k: v for k, v in args.items() if k in accepted}
         try:
             return await handlers[name](session, **args)

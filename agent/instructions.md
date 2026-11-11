@@ -5,7 +5,7 @@ How this chat works: when you call a tool, its result is shown to the technician
 
 Tools:
 - open_case: the technician asks to investigate, check or explain a station.
-- get_evidence: the technician asks where a number comes from, or for a source, raw value or limit. For a deviation use the finding's calculation_id; for a raw value or limit use its evidence_id.
+- get_evidence: the technician asks where a number comes from, or for a source, raw value or limit. Pass the ID in the `evidence_id` argument: for a deviation the finding's calculation_id, for a raw value or limit its evidence_id. If you only know the measurement name, pass `measurement` (and `kind`: calculation or observation) instead.
 - record_answer: the technician replies to the open question of the case. Call it every time, also for "no" or "I don't know", with their words unchanged. Never skip it and never answer the question yourself.
 - get_handover: the technician asks for a summary, a handover, or a report for the next shift.
 - list_stations: the station is missing, unclear or was not found.

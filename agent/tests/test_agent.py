@@ -80,8 +80,8 @@ def test_full_journey_one_model_call_per_turn(monkeypatch):
         # breach first, then the in-range coded row, then the not evaluable row; values as returned
         rows = [line for line in reply.splitlines() if line.startswith("| SYNTHETIC")]
         assert [r.split("|")[1].strip() for r in rows] == ["SYNTHETIC Torque", "SYNTHETIC Count", "SYNTHETIC Invalid"]
-        assert "| 10.5 Nm | 8.0..10.0 | ABOVE | 0.5 | none |" in rows[0]
-        assert "| SYNTHETIC-SERIAL | 2026-01-01 10:00:00 |" in rows[0]
+        assert "| 10.5 Nm | 8.0 – 10.0 | ABOVE | 0.5 | none | SYNTHETIC-SERIAL |" in rows[0]
+        assert "| SYNTHETIC-SERIAL | 2026-01-01 10:00:00 |" in rows[0]  # identifiers after the decisive columns
         assert "| WITHIN_RECORDED_BOUNDS | 0 | 1001 |" in rows[1]
         assert "SYNTHETIC Count is listed because a fail code is recorded" in reply
         assert "UNDETERMINED" in reply and "**Question for you:**" in reply
@@ -184,3 +184,28 @@ def test_mcp_lists_the_five_tools(monkeypatch):
             "name": "open_case", "arguments": {"station_number": "SYNTHETIC-STATION"}}}, headers=headers).json()
         body = json.loads(called["result"]["content"][0]["text"])
         assert body["status"] == "ok" and "SYNTHETIC Torque" in body["message"] and body["question_id"]
+
+
+def test_evidence_by_measurement_name_of_a_shown_finding(monkeypatch):
+    # Demo question "where does the X deviation come from?": the model names the measurement.
+    model = FakeModel(("open_case", {"station_number": "synthetic-station"}),
+                      ("get_evidence", {"measurement": "synthetic  TORQUE"}),
+                      ("get_evidence", {"measurement": "SYNTHETIC Torque", "kind": "observation"}),
+                      ("get_evidence", {"measurement": "Invented Pressure"}),
+                      ("get_evidence", {}),
+                      ("get_evidence", {"calculation_id": "2"}))
+    with make(model, monkeypatch)[0] as client:
+        headers = {"X-API-Key": client.app.state.settings.api_key}
+        first = say(client, headers, "open")
+        conv, case_id = first["data"]["conversation_id"], first["case_id"]
+        calculated = say(client, headers, "where does the torque deviation come from?", conv)["data"]["reply"]
+        assert f"`E-{case_id}-2` **(CALCULATED)**" in calculated and "deviation **0.5**" in calculated
+        observed = say(client, headers, "raw torque row", conv)["data"]["reply"]
+        assert f"`E-{case_id}-1` **(OBSERVED)**" in observed and "`8.0` – `10.0`" in observed
+        missing = say(client, headers, "pressure?", conv)["data"]
+        assert "is not among the findings shown for this case" in missing["reply"]
+        assert missing["tool_calls"][0]["code"] == "EVIDENCE_NOT_FOUND"
+        empty = say(client, headers, "source?", conv)["data"]
+        assert empty["tool_calls"][0]["code"] == "BAD_ARGUMENTS"
+        alias = say(client, headers, "deviation source", conv)["data"]["reply"]
+        assert f"`E-{case_id}-2` **(CALCULATED)**" in alias

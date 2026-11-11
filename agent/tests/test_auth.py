@@ -116,3 +116,16 @@ def test_status_reports_oracle_and_model_without_calling_the_model():
     assert login(c, headers).status_code == 200
     data = c.get("/api/v1/status", headers=headers).json()["data"]
     assert data["oracle"] == "ok" and data["model"] == "not_configured"
+
+
+def test_station_overview_counts_come_from_the_case_rules():
+    c, headers = client()
+    assert c.get("/api/v1/stations/overview", headers=headers).status_code == 401  # behind the sign-in
+    assert login(c, headers).status_code == 200
+    body = c.get("/api/v1/stations/overview", headers=headers).json()
+    station = body["data"]["stations"][0]
+    # Synthetic source, by hand: Torque 10.5 > 10.0 (ABOVE); Count 8 in 8..8 with code 1001; one invalid value.
+    assert station["station_number"] == "SYNTHETIC-STATION"
+    assert (station["above"], station["below"], station["not_evaluable"]) == (1, 0, 1)
+    assert station["rows_with_fail_code"] >= 1 and station["out_of_range_serials"] == 1
+    assert "not a diagnosis" in body["data"]["note"]

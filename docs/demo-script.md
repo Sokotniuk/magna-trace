@@ -15,24 +15,33 @@ dashboard and stay as they are. Timings below are a plan, not a measured rehears
 5. Header chip must read **Oracle OK** and **Model ready/OK**. If not, see "If something fails".
 6. Browser zoom 100 %, window maximised, no other tabs, notifications off.
 
-## The run
+## The run — demo station ST1003 (real data, nothing staged)
+
+ST1003 (welding) has one real test of serial `1000000004`, recorded 2026-11-09 11:54:42, where five
+values are above their recorded limits, all with fail code `1001`: Weld Voltage 28.255 V (23–27),
+Weld Time 1286.156 ms (1050–1250), Cooling Flow 15.987 l/min (11–15), Resistance .295 mOhm
+(.16–.26), Penetration 2.973 mm (1.6–2.6). Checked against Oracle's own arithmetic (D35).
+Five other stations show the same pattern (ST1004, ST2003, ST4003, ST4004 with five values,
+ST3003 with four); any of them is a backup.
 
 | Time | Do | Say (one line) |
 |---|---|---|
-| 0:00–0:20 | Show the dashboard: chat left, stations right, employee in the header. | "A technician asks in plain words; every number comes from the line database with an evidence ID." |
-| 0:20–1:00 | Click the suggestion **"Investigate station ST3003. What happened?"** | "The model only picks the check. The table is produced by the backend from Oracle, unchanged. Assessment stays UNDETERMINED — we do not guess causes." |
-| 1:00–1:20 | Click any blue evidence ID in the reply (`E-…`). Close with **Close** or Esc. | "Every value resolves to the captured source row: raw value, limits, fail code, time." |
-| 1:20–1:50 | Type: **"Yes, the fixture was re-clamped at the start of the shift."** | "The answer is stored as technician evidence under my name; observations are not changed." |
-| 1:50–2:20 | Click **"Give me a handover for the next shift."**, then **Print handover** (cancel the print dialog). | "The next shift gets findings, my report, open questions and the next check." |
-| 2:20–2:45 | Type: **"Which part should I replace?"** | "No repair advice and no free model prose: the answer is a fixed backend text that lists what TRACE can do (audit F01)." |
+| 0:00–0:20 | Show the dashboard: 6 station tiles outlined in red ("5 out"). | "These six stations have recorded values outside their limits. The count comes from the database; it is not a diagnosis." |
+| 0:20–1:00 | Type: **"Station ST1003 shows errors. What happened?"** | "The model only picks the check. Value, limits, status and deviation come from Oracle unchanged. Assessment stays UNDETERMINED — we do not guess causes." |
+| 1:00–1:20 | Type: **"Where does the Weld Time deviation come from?"** (or click a blue `E-…` ID) | "1286.156 minus the upper limit 1250 gives 36.156 — rule, inputs and the raw source row." |
+| 1:20–1:50 | Type: **"Yes, the welding electrode tips were changed at the start of the shift."** | "My answer is stored word for word under my name; the measurements are not changed." |
+| 1:50–2:20 | Type: **"Give me a handover for the next shift."**, then **Print handover** (cancel the dialog). | "The next shift gets findings, my report, open questions and the next check." |
+| 2:20–2:45 | Type: **"Which part should I replace?"** | "No repair advice and no free model prose: a fixed backend text lists what TRACE can do." |
 | 2:45–3:00 | Point at the status chip and the sign-in name. | "Read-only database user, fixed SQL, every fact traceable. Copilot Studio can connect through `/mcp`." |
 
-Second run: press **New conversation** and repeat. A fresh case gets new evidence IDs.
+Second run: press **New conversation** and repeat (new case, new evidence IDs). Leave a few seconds
+between messages: the free model tier can rate-limit bursts (seen once in rehearsal; the reply says
+so and nothing is changed — send the message again).
 
 ## If something fails (say it, do not hide it)
 
 - **Model down** (chip "Model down", or a rate-limit reply): continue without the chat. Click the
-  **ST3003** tile, then a blue evidence link in the table, then **Load handover**. Same backend,
+  outlined **ST1003** tile, then a blue evidence link in the table, then **Load handover**. Same backend,
   same evidence, no model involved.
 - **Oracle down** (chip "Oracle down", `SOURCE_UNAVAILABLE`): show the error as it is. The
   product never shows cached or invented values (invariant I-10). Restart the Oracle container.
