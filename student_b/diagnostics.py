@@ -5,7 +5,23 @@ from datetime import datetime
 from backend.app import schemas as s
 
 
+def _priority(finding: s.Finding) -> int:
+    """Order for the five displayed findings; capture order is kept within a group.
+
+    Integration fix (2026-11-11): without it the snapshot showed the first five captured rows
+    and limit breaches could sit unseen in additional_evidence_ids. No value is changed.
+    """
+    if finding.range_status in ("ABOVE", "BELOW"):
+        return 0
+    if finding.range_status == "NOT_EVALUABLE":
+        return 2
+    if finding.raw_fail_code is not None:  # within recorded bounds but a code is recorded
+        return 1
+    return 3
+
+
 def snapshot(scope: s.Scope, findings: tuple[s.Finding, ...], question_id: str, retrieved_at: datetime) -> s.Snapshot:
+    findings = tuple(sorted(findings, key=_priority))  # stable sort
     basis = tuple(f.evidence_id for f in findings[:5])
     hypotheses = tuple(s.Hypothesis(
         description=description, supporting_evidence_ids=basis, counterevidence_ids=(),

@@ -1,40 +1,16 @@
-# Student B — локальная готовность перед интеграцией
+# Статус B перед общей сборкой
 
-Проверено 2026-11-11. Этот checkpoint заменяет устаревшие количества тестов в REPORT.md и LOCAL_PROGRESS.md. Основа: main 6bd249255123b8cfc3bc6805375f05b548f2ac62.
+- [x] B1: auth, envelope, request IDs, health/readiness/echo и real A1 interface.
+- [x] B2: canonical schemas/examples и drift checks; JSON shape сохранён.
+- [x] B3: immutable evidence, private full A capture, unknown/foreign IDs, no requery.
+- [x] B4: isolation, TTL/caps/locks/states, atomic updates, explicit internal conflict review.
+- [x] B5: actual A3 output, max 5 findings, UNDETERMINED, один следующий шаг и handover.
+- [x] B6: все пять production routes подключены к A2/A3.
+- [x] B7: локальные API/driver/HTTP checks, python -m student_b.verify.
+- [ ] Реальный Oracle и независимая SQL-сверка интегрированной ревизии A/D.
+- [ ] C/D подтверждают API/spec/proxy/mocks и принятые time/search/null semantics.
+- [ ] C интегрирует record_answer и explicit conflict flow.
+- [ ] Два живых пользовательских сценария, live negatives и общая приёмка.
+- [ ] D15/connector budget, A8 и G0–G3 по командным доказательствам.
 
-## Definition of Done локальной части
-
-- [x] B1: FastAPI, серверная конфигурация, auth, request_id, безопасные ошибки и подключение интерфейса A1; проверено без живого Oracle.
-- [x] B2: пять операций используют замороженные модели; автоматическая проверка совпадения JSON Schema и OpenAPI. Ошибки OpenAPI описаны общим ErrorResponse, включая 422.
-- [x] B3: immutable evidence, неизвестные/чужие IDs, отсутствие повторного чтения; неудачная сборка snapshot не публикует частичные evidence.
-- [x] B4: изоляция, TTL, лимиты, состояния, повторные ответы и конкурентные обращения. Ожидание занятого кейса не блокирует другие кейсы; удалённый кейс не восстанавливается после ожидания. Ошибка источника сохраняется при истечении TTL.
-- [x] B5: максимум пять findings, UNDETERMINED, один следующий шаг, handover; явные подтверждённые конфликты поддерживаются внутренним сервисом.
-- [x] B6: пять REST-маршрутов и ошибки проверены с синтетическим DataSource. Это завершение локальной части, а не условия «all five answer on real data» из плана.
-- [x] B7: единая воспроизводимая команда проверок, независимые синтетические ожидания, отрицательные пути, два полных API-сценария.
-
-## Изменения этого этапа
-
-`cases.py`: ожидание per-case lock вынесено за registry lock с повторной проверкой существования и TTL; запись failure-state не скрывает исходную ошибку.
-
-`api.py`: evidence и snapshot сначала собираются отдельно, затем публикуются вместе; ошибки отражены в OpenAPI без изменения B2.
-
-`tests/test_lifecycle.py`, `tests/test_contract_drift.py`: девять регрессионных проверок. `verify.py`: единый запуск всех локальных проверок. Новые зависимости не нужны.
-
-## Фактическая проверка
-
-Из корня репозитория, после установки student_b/requirements-test.txt:
-
-```bash
-python -m student_b.verify
-```
-
-Результат: **75 passed**, два предупреждения зависимостей; **35 B2 fixtures PASS**; **два синтетических API-сценария PASS**. Ничего не пропущено. Замороженные schemas.py, contracts/b2 и модуль A1 не изменены.
-
-## Следующий этап: совместная интеграция
-
-1. Получить реальные исходники A2/A3 и их тесты. Согласовать D12: границы времени, поиск станций, nullable deviation, raw-code representation, лимиты и порядок строк. Подключить их через student_b/source.py без собственного SQL и повторного анализа B.
-2. На сервере с credentials проверить A1 echo, независимый COUNT и полный API-сценарий на реальных измерениях. Общий deadline Oracle handshake остаётся открытым.
-3. С C согласовать новый внешний API/провайдер, вызов record_answer и передачу явного подтверждения конфликта. Frozen REST не принимает reviewed_conflicts; внутренний сервис не заменяет пользовательский flow.
-4. С D подключить настоящий backend через серверный proxy, сверить минимум три значения независимым SQL и выполнить два живых сценария.
-
-До подключения A2/A3 production /cases и /stations честно возвращают SOURCE_UNAVAILABLE. G0–G3, общий backend DoD и готовность демо не объявлены закрытыми. B8/comparison остаётся условным P1 после стабильного P0 и A7.
+B8 integration fixes выполнены локально; comparison — условный P1 после A7 и стабильного P0. Общий backend DoD не закрывается одними локальными тестами.

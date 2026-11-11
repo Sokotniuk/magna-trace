@@ -223,3 +223,87 @@ WITH multiplicities AS (
 SELECT COUNT(*) AS record_count,
        COUNT(CASE WHEN row_multiplicity > 1 THEN 1 END) AS rows_in_duplicate_groups
 FROM multiplicities;
+
+-- A4 prepared SELECTs. These comment blocks are executable query templates for
+-- the temporary A4 verifier / a parameter-capable restricted SQL client.
+-- Keeping them commented preserves @data-baseline.sql's existing A1 procedure;
+-- bind values are supplied separately, never by textual substitution or EXEC.
+-- All raw fields stay local. No Oracle numeric coercion is used: D independently
+-- computes Decimal expectations from these raw SELECT results under D04/D09.
+-- Each query orders before its bound cap. Counts/multiplicity describe the
+-- queried scope, not a durable key. ROWID is a temporary capture locator only.
+
+/* A4-01
+SELECT m.STATION_NUMBER AS station_number, m.SERIAL_NUMBER AS serial_number,
+       m.MEASURE_NAME AS measurement, m.MEASURE_VALUE AS raw_value,
+       m.LOWER_LIMIT AS raw_lower, m.UPPER_LIMIT AS raw_upper, m.UNIT AS unit,
+       m.MEASURE_FAIL_CODE AS raw_fail_code, m.BOOK_STAMP AS book_stamp,
+       m.PART_NUMBER AS part_number, m.WORKORDER_NUMBER AS workorder_number,
+       m.MEASURE_STEP_NUMBER AS measure_step_number, m.MEASURE_TYPE AS measure_type,
+       ROWIDTOCHAR(m.ROWID) AS source_rowid,
+       m.NOMINAL AS nominal, m.TOLERANCE AS tolerance,
+       m.LOWER_INTERVENTION_LIMIT AS lower_intervention_limit,
+       m.UPPER_INTERVENTION_LIMIT AS upper_intervention_limit,
+       m.LOWER_SCRAP_LIMIT AS lower_scrap_limit,
+       m.UPPER_SCRAP_LIMIT AS upper_scrap_limit,
+       ROW_NUMBER() OVER (ORDER BY m.BOOK_STAMP DESC NULLS LAST, m.ROWID ASC)
+           AS capture_ordinal,
+       COUNT(*) OVER () AS total_matching_rows,
+       COUNT(*) OVER (PARTITION BY m.STATION_NUMBER, m.SERIAL_NUMBER,
+           m.BOOK_STAMP, m.MEASURE_STEP_NUMBER, m.MEASURE_NAME,
+           m.PART_NUMBER, m.WORKORDER_NUMBER) AS candidate_multiplicity
+FROM HACKATON.SNO_MEASUREMENT_DATA m
+WHERE m.STATION_NUMBER COLLATE BINARY = :station_number
+  AND (:serial_number IS NULL OR m.SERIAL_NUMBER COLLATE BINARY = :serial_number)
+  AND (:from_time IS NULL OR m.BOOK_STAMP >= :from_time)
+  AND (:to_time IS NULL OR m.BOOK_STAMP < :to_time)
+ORDER BY m.BOOK_STAMP DESC NULLS LAST, m.ROWID ASC
+FETCH FIRST :row_limit ROWS ONLY
+*/
+
+/* A4-02
+SELECT m.STATION_NUMBER AS station_number, m.SERIAL_NUMBER AS serial_number,
+       m.MEASURE_NAME AS measurement, m.MEASURE_VALUE AS raw_value,
+       m.LOWER_LIMIT AS raw_lower, m.UPPER_LIMIT AS raw_upper, m.UNIT AS unit,
+       m.MEASURE_FAIL_CODE AS raw_fail_code, m.BOOK_STAMP AS book_stamp,
+       m.PART_NUMBER AS part_number, m.WORKORDER_NUMBER AS workorder_number,
+       m.MEASURE_STEP_NUMBER AS measure_step_number, m.MEASURE_TYPE AS measure_type,
+       ROWIDTOCHAR(m.ROWID) AS source_rowid,
+       m.NOMINAL AS nominal, m.TOLERANCE AS tolerance,
+       m.LOWER_INTERVENTION_LIMIT AS lower_intervention_limit,
+       m.UPPER_INTERVENTION_LIMIT AS upper_intervention_limit,
+       m.LOWER_SCRAP_LIMIT AS lower_scrap_limit,
+       m.UPPER_SCRAP_LIMIT AS upper_scrap_limit,
+       ROW_NUMBER() OVER (ORDER BY m.BOOK_STAMP DESC NULLS LAST, m.ROWID ASC)
+           AS capture_ordinal,
+       COUNT(*) OVER () AS total_matching_rows,
+       COUNT(*) OVER (PARTITION BY m.STATION_NUMBER, m.SERIAL_NUMBER,
+           m.BOOK_STAMP, m.MEASURE_STEP_NUMBER, m.MEASURE_NAME,
+           m.PART_NUMBER, m.WORKORDER_NUMBER) AS candidate_multiplicity
+FROM HACKATON.SNO_MEASUREMENT_DATA m
+WHERE m.MEASURE_FAIL_CODE = :fail_code
+  AND m.MEASURE_NAME COLLATE BINARY = :measurement
+ORDER BY m.BOOK_STAMP DESC NULLS LAST, m.ROWID ASC
+FETCH FIRST :row_limit ROWS ONLY
+*/
+
+/* A4-03
+SELECT m.STATION_NUMBER AS station_number, m.SERIAL_NUMBER AS serial_number,
+       m.MEASURE_NAME AS measurement, m.MEASURE_VALUE AS raw_value,
+       m.LOWER_LIMIT AS raw_lower, m.UPPER_LIMIT AS raw_upper, m.UNIT AS unit,
+       m.MEASURE_FAIL_CODE AS raw_fail_code, m.BOOK_STAMP AS book_stamp,
+       m.PART_NUMBER AS part_number, m.WORKORDER_NUMBER AS workorder_number,
+       m.MEASURE_STEP_NUMBER AS measure_step_number, m.MEASURE_TYPE AS measure_type,
+       ROWIDTOCHAR(m.ROWID) AS source_rowid,
+       m.NOMINAL AS nominal, m.TOLERANCE AS tolerance,
+       m.LOWER_INTERVENTION_LIMIT AS lower_intervention_limit,
+       m.UPPER_INTERVENTION_LIMIT AS upper_intervention_limit,
+       m.LOWER_SCRAP_LIMIT AS lower_scrap_limit,
+       m.UPPER_SCRAP_LIMIT AS upper_scrap_limit
+FROM HACKATON.SNO_MEASUREMENT_DATA m
+WHERE m.STATION_NUMBER COLLATE BINARY = :station_number
+  AND m.SERIAL_NUMBER COLLATE BINARY = :serial_number
+  AND ROWIDTOCHAR(m.ROWID) = :source_rowid
+ORDER BY m.BOOK_STAMP DESC NULLS LAST, m.ROWID ASC
+FETCH FIRST :row_limit ROWS ONLY
+*/

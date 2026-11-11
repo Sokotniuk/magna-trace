@@ -46,17 +46,19 @@ def make_router(authenticate: Callable, development_routes: bool) -> APIRouter:
                 raw = row.raw_fields
                 if raw.station_number != body.station_number or (body.serial_number is not None and raw.serial_number != body.serial_number):
                     raise Failure("SOURCE_UNAVAILABLE", "Source returned rows outside the requested scope")
-            retrieved_at = utc_now()
+            retrieved_at = batch.retrieved_at or utc_now()
+            queried_scope = batch.source_scope or body
             with store.locked(case.case_id) as current:
                 # Publish evidence only after the complete snapshot validates.
                 captured = EvidenceStore(case.case_id)
-                findings = tuple(captured.capture(body, row, i, retrieved_at) for i, row in enumerate(batch.rows, 1))
+                findings = tuple(captured.capture(queried_scope, row, i, retrieved_at) for i, row in enumerate(batch.rows, 1))
                 question_id = uuid4().hex
-                scope = s.Scope(**body.model_dump(), row_count=batch.total_rows, captured_row_count=len(batch.rows), truncated=batch.truncated, coverage_warnings=batch.coverage_warnings)
+                scope = s.Scope(**queried_scope.model_dump(), row_count=batch.total_rows, captured_row_count=len(batch.rows), truncated=batch.truncated, coverage_warnings=batch.coverage_warnings)
                 result = diagnostics.snapshot(scope, findings, question_id, retrieved_at)
                 current.evidence = captured
                 current.question_id = question_id
                 current.snapshot = result
+                current.source_capture = batch.source_capture
                 current.transition("EVIDENCE_LOADED")
                 current.transition("AWAITING_CLARIFICATION")
         except Exception as error:

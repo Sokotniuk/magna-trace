@@ -1,0 +1,8 @@
+{
+  "date": "2026-11-11",
+  "source": "User-supplied A-to-B-integration.zip; runtime modules copied unchanged",
+  "sha256": {
+    "backend/app/oracle_repo.py": "8aaaa27194467b1ba9238c657904a3b74d124acc6052022bbcb618a9b7d595ea",
+    "backend/app/measurements.py": "92457cd89a3cfc29ce4c6598df3c3031e35539008dd7b9285ba1d27f86dd0b08"
+  }
+}

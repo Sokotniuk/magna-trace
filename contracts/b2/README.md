@@ -1,5 +1,7 @@
 # B2 v1 — пакет API-контракта для B, C и D
 
+**Уточнение интеграции 2026-11-11:** структура моделей, schemas.json и examples.json сохранена. Подключённый A backend использует принятые D21/D27 half-open [from,to), case-sensitive literal substring и deviation=null без breach. Старые предложения inclusive/prefix/zero ниже — исторический контекст mock-пакета, не поведение текущего source adapter. См. student_b/INTEGRATION_NOTES.md; C/D должны сверить фильтры и fixtures при сборке. Нулевой deviation в старом синтетическом примере остаётся допустимым значением схемы, но не генерируется A3 для within-bounds.
+
 **Статус:** подготовлено B для mock-разработки и согласования A/C/D; D подтвердил пригодность пакета для D1.2, формат record_answer.data и server-side X-API-Key; окончательный contract freeze и подтверждение C/A не заявляются. Это контракт, не работающий backend.
 
 Основание: корневые `product.md`, `architecture.md`, `plan.md`, `decisions.md`, `AGENTS.md`, `tips.md` из `main` на ревизии `2cbfd41223bdb12ea29b795f0ef7335af6cdcab7`. На этой ревизии репозиторий содержит только эти шесть документов. Ссылки документов на `docs/` описывают будущую структуру; оригиналы здесь не перемещаются и не переписываются.

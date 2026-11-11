@@ -190,7 +190,9 @@ def test_cleanup_failure_prevents_returning_a_count(driver, stage):
 
 def test_baseline_contains_only_reads_and_independent_table_counts():
     baseline = Path(__file__).resolve().parents[1] / "docs" / "data-baseline.sql"
-    sql = re.sub(r"--[^\n]*", "", baseline.read_text(encoding="utf-8"))
+    # A4's prepared templates are SQL comments, checked by their own tests.
+    sql = re.sub(r"/\*.*?\*/", "", baseline.read_text(encoding="utf-8"), flags=re.S)
+    sql = re.sub(r"--[^\n]*", "", sql)
     statements = [statement.strip() for statement in sql.split(";") if statement.strip()]
 
     assert statements
@@ -249,7 +251,7 @@ def test_baseline_duplicate_audit_uses_verified_column_inventory():
         "LOWER_SCRAP_LIMIT", "UPPER_SCRAP_LIMIT",
     }
     baseline = Path(__file__).resolve().parents[1] / "docs" / "data-baseline.sql"
-    sql = baseline.read_text(encoding="utf-8")
+    sql = re.sub(r"/\*.*?\*/", "", baseline.read_text(encoding="utf-8"), flags=re.S)
     partition_lists = re.findall(r"PARTITION BY\s+([^)]*)", sql, re.IGNORECASE)
     assert len(partition_lists) == 3
     for partition in partition_lists:

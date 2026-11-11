@@ -38,6 +38,7 @@ class Case:
     created_at: datetime = field(default_factory=utc_now)
     updated_at: datetime = field(default_factory=utc_now)
     history: list[str] = field(default_factory=lambda: ["OPENED"])
+    source_capture: object | None = field(default=None, repr=False)
     lock: RLock = field(default_factory=RLock, repr=False)
 
     def transition(self, target: str) -> None:
