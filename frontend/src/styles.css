@@ -487,6 +487,88 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
 
 @keyframes chat-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
+/* ---------- overview before a case: journey steps + station tiles ---------- */
+
+.overview h3 + .journey { margin-top: 0; }
+.journey {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+.journey li {
+  position: relative;
+  display: grid;
+  gap: 0.2rem;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-top: 3px solid var(--slate-300);
+  background: var(--color-surface-muted);
+}
+.journey li.current { border-top-color: var(--color-accent); background: var(--color-surface); }
+.journey-index {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  background: var(--graphite-900);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.journey li.current .journey-index { background: var(--color-accent); }
+.journey-title { font-weight: 700; font-size: 0.9rem; color: var(--graphite-900); }
+.journey-text { font-size: 0.78rem; line-height: 1.4; color: var(--color-text-muted); }
+
+.tiles-count { margin-left: auto; font-size: 0.75rem; font-weight: 500; letter-spacing: 0; color: var(--color-text-muted); }
+.station-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.station-tile {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  min-height: 3.6rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--graphite-700);
+  border-radius: 0;
+  background: var(--color-surface);
+  color: var(--graphite-900);
+  text-align: left;
+  box-shadow: none;
+  cursor: pointer;
+  animation: tile-in 260ms var(--ease) both;
+  animation-delay: calc(var(--i) * 18ms);
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+.station-tile:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--slate-300);
+  border-left-color: var(--color-accent);
+  background: var(--color-surface);
+  color: var(--graphite-900);
+  box-shadow: 0 8px 18px rgb(15 23 42 / 0.12);
+}
+.station-tile[aria-pressed="true"] { border-left-color: var(--color-accent); background: var(--red-50); }
+.station-tile:disabled { opacity: 0.55; cursor: progress; }
+.tile-number { font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; }
+.tile-count { font-size: 0.75rem; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+@keyframes tile-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 720px) {
+  .journey { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* ---------- layout: one-screen workspace on wide screens ---------- */
 
 /* On desktop (presentation screens) the whole app fits the viewport: the page itself never
@@ -522,6 +604,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
   .dashboard:has(> .chat) > section:not(.chat) { grid-column: 2; }
   .dashboard:has(> .chat) > section[aria-labelledby="station-heading"] { grid-row: 2; }
   .dashboard:has(> .chat) > section.error-panel { grid-row: 3; }
+  .dashboard:has(> .chat) > section.overview { grid-row: 4; min-height: 0; overflow-y: auto; margin-bottom: 0; }
   .dashboard:has(> .chat) > section[aria-labelledby="findings-heading"] { grid-row: 4; min-height: 0; overflow-y: auto; margin-bottom: 0; }
   .dashboard:has(> .chat) > .team-footer { grid-column: 2; grid-row: 5; margin-top: var(--space-2); }
 

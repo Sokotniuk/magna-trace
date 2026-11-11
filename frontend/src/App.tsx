@@ -6,6 +6,7 @@ import demoScope from './demo-scope.json'
 import { apiLabel, isMockMode, sourceLabel } from './api-mode'
 import CaseDetails from './CaseDetails'
 import ChatPanel from './ChatPanel'
+import Overview from './Overview'
 import StationPicker from './StationPicker'
 import TeamFooter from './TeamFooter'
 export { FindingsTable } from './FindingsTable'
@@ -41,12 +42,17 @@ export default function App() {
 
   async function handleOpen(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!selectedStation || opening) return
+    await openStation(selectedStation)
+  }
+
+  async function openStation(station: string) {
+    if (!station || opening) return
+    setSelectedStation(station)
     setOpening(true)
     setActiveCase(null)
     setError(null)
     try {
-      setActiveCase(await openCase(selectedStation))
+      setActiveCase(await openCase(station))
     } catch (reason: unknown) {
       setError(reason instanceof ApiError ? reason : new ApiError(`Could not reach the ${apiLabel}. No findings loaded.`))
     } finally {
@@ -108,6 +114,9 @@ export default function App() {
         {error.scope != null && <><p>Queried scope returned by API:</p><pre>{JSON.stringify(error.scope, null, 2)}</pre></>}
         <p>No findings are shown for this request.</p>
       </section>}
+
+      {!isMockMode && !snapshot && !error && !loadingStations && stations.length > 0 &&
+        <Overview stations={stations} selected={selectedStation} disabled={opening} onOpen={(station) => void openStation(station)} />}
 
       {snapshot && <section aria-labelledby="findings-heading">
         <h3 id="findings-heading">{sourceLabel} findings — {snapshot.scope.station_number}</h3>
