@@ -16,8 +16,8 @@ function StringList({ items }: { items: string[] }) {
   return items.length ? <ul>{items.map((item, index) => <li className="returned-text" key={index}>{item}</li>)}</ul> : <p>None returned.</p>
 }
 
-function EvidenceList({ ids, onEvidence }: { ids: string[]; onEvidence: (id: string) => void }) {
-  return ids.length ? <ul>{ids.map((id) => <li key={id}><EvidenceReference id={id} onEvidence={onEvidence} /></li>)}</ul> : <p>No references returned.</p>
+function EvidenceList({ ids, onEvidence, short = false }: { ids: string[]; onEvidence: (id: string) => void; short?: boolean }) {
+  return ids.length ? <ul className={short ? 'evidence-chips' : undefined}>{ids.map((id) => <li key={id}><EvidenceReference id={id} onEvidence={onEvidence} short={short} /></li>)}</ul> : <p>No references returned.</p>
 }
 
 export function EvidenceDetails({ evidence, onEvidence }: { evidence: Evidence; onEvidence: (id: string) => void }) {
@@ -127,7 +127,12 @@ export default function CaseDetails({ caseId, snapshot }: { caseId: string; snap
   return <div className="case-details">
     <p>Active {sourceLabel} case: <code>{caseId}</code></p>
     {snapshot.findings.length ? <FindingsTable findings={snapshot.findings} onEvidence={loadEvidence} /> : <p>No findings returned for this scope.</p>}
-    {snapshot.additional_evidence_ids.length > 0 && <><h4>Additional evidence</h4><EvidenceList ids={snapshot.additional_evidence_ids} onEvidence={loadEvidence} /></>}
+    {/* Collapsed by default: the list can hold dozens of IDs and would push the drill-down off screen. */}
+    {snapshot.additional_evidence_ids.length > 0 && <details className="additional-evidence">
+      <summary>Additional evidence ({snapshot.additional_evidence_ids.length} IDs)</summary>
+      <EvidenceList ids={snapshot.additional_evidence_ids} onEvidence={loadEvidence} short />
+    </details>}
+    <div className="drilldown">
     <section id="evidence-panel" aria-labelledby="evidence-heading" aria-busy={loadingEvidence}>
       <h3 id="evidence-heading">{sourceLabel} evidence details</h3>
       <form onSubmit={(event) => { event.preventDefault(); if (evidenceId) void loadEvidence(evidenceId) }}>
@@ -149,5 +154,6 @@ export default function CaseDetails({ caseId, snapshot }: { caseId: string; snap
       {handoverError && <RequestError error={handoverError} />}
       {handover && <HandoverDetails handover={handover} onEvidence={loadEvidence} />}
     </section>
+    </div>
   </div>
 }
