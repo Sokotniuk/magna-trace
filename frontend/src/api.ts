@@ -123,7 +123,8 @@ async function request(path: string, init?: RequestInit) {
 }
 
 export async function listStations(signal?: AbortSignal): Promise<Station[]> {
-  const body = await request(isMockMode ? '/api/v1/stations?q=SYNTHETIC&limit=20' : '/api/v1/stations', { signal })
+  // Live mode asks for the B2 maximum (100): the backend default of 20 hid stations (23 exist).
+  const body = await request(isMockMode ? '/api/v1/stations?q=SYNTHETIC&limit=20' : '/api/v1/stations?limit=100', { signal })
   if (body.case_id !== null || !object(body.data) || !Array.isArray(body.data.stations) ||
       !body.data.stations.every((station) => object(station) &&
         typeof station.station_number === 'string' && typeof station.record_count === 'number')) {

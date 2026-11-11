@@ -6,6 +6,8 @@ import demoScope from './demo-scope.json'
 import { apiLabel, isMockMode, sourceLabel } from './api-mode'
 import CaseDetails from './CaseDetails'
 import ChatPanel from './ChatPanel'
+import StationPicker from './StationPicker'
+import TeamFooter from './TeamFooter'
 export { FindingsTable } from './FindingsTable'
 
 export default function App() {
@@ -73,9 +75,15 @@ export default function App() {
       <section aria-labelledby="station-heading">
         <h3 id="station-heading">Choose a station</h3>
         <form onSubmit={handleOpen} aria-busy={opening || loadingStations}>
-          <label htmlFor="station">Station</label>
+          <label htmlFor="station-picker">Station</label>
           <div className="station-controls">
-            <select id="station" value={selectedStation} disabled={loadingStations || opening} onChange={(event) => {
+            <StationPicker stations={stations} value={selectedStation} disabled={loadingStations || opening} onChange={(value) => {
+              setSelectedStation(value)
+              setActiveCase(null)
+              setError(null)
+            }} />
+            {/* Native select kept as the form value and for D's browser tests; the picker above is the visible control. */}
+            <select id="station" className="visually-hidden" tabIndex={-1} aria-hidden="true" value={selectedStation} disabled={loadingStations || opening} onChange={(event) => {
               setSelectedStation(event.target.value)
               setActiveCase(null)
               setError(null)
@@ -112,6 +120,8 @@ export default function App() {
         </section>
         <CaseDetails caseId={activeCase!.case_id} snapshot={snapshot} />
       </section>}
+
+      <TeamFooter />
     </main>
   )
 }

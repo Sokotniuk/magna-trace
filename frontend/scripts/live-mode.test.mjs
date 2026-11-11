@@ -46,7 +46,7 @@ test('D4: explicit live mode displays backend errors without mock fallback', { t
       res.end('<html>SYNTHETIC local protocol fault</html>')
       return
     }
-    const fixture = req.url === '/api/v1/stations'
+    const fixture = req.url === '/api/v1/stations?limit=100'
       ? byName.get('list_stations')
       : fixtures.cases.find(item => item.path === req.url && item.method === req.method)
     assert.ok(fixture, 'Only documented routes may be requested')
@@ -89,7 +89,7 @@ test('D4: explicit live mode displays backend errors without mock fallback', { t
     assert.equal(await evaluate(`document.querySelector('button[type="submit"]').disabled`), true)
     assert.equal(await evaluate(`document.querySelector('.case-details') === null`), true)
     assert.equal(await evaluate(`document.querySelector('.synthetic-banner').textContent.includes('LIVE API mode')`), true)
-    assert.equal(seen[0].url, '/api/v1/stations')
+    assert.equal(seen[0].url, '/api/v1/stations?limit=100')
   })
 
   await t.test('unmarked B2 successes preserve values, live labels and station-only scope', async () => {
