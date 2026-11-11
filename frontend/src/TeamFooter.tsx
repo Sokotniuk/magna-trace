@@ -24,7 +24,6 @@ export default function TeamFooter() {
 
   return (
     <footer className="team-footer">
-      <span className="team-footer-event">MAGNA Hackathon · Košice 2026</span>
       <div ref={root} className={`team${pinned ? ' pinned' : ''}`}>
         <button type="button" className="team-button" aria-expanded={pinned} aria-controls="team-members"
           onClick={() => setPinned((value) => !value)}>

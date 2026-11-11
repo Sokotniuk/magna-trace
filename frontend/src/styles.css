@@ -38,9 +38,9 @@
   --font-sans: 'Fira Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Fira Code', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 16px rgb(15 23 42 / 0.05);
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -136,7 +136,7 @@ h2 {
   justify-self: end;
   padding: var(--space-2) var(--space-3);
   border: 1px solid rgb(255 255 255 / 0.18);
-  border-radius: 999px;
+  border-radius: 0;
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -200,7 +200,7 @@ h3::before {
   flex: none;
   width: 4px;
   height: 1.1em;
-  border-radius: 2px;
+  border-radius: 0;
   background: var(--color-accent);
 }
 
@@ -214,7 +214,7 @@ code {
   font-family: var(--font-mono);
   font-size: 0.85em;
   padding: 0.05em 0.35em;
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--slate-100);
   color: var(--graphite-800);
   overflow-wrap: anywhere;
@@ -310,7 +310,7 @@ tbody tr:last-child > * { border-bottom: 0; }
 .range-status {
   display: inline-block;
   padding: 0.2rem 0.55rem;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1px solid currentColor;
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -367,7 +367,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
 
 /* ---------- chat with the diagnostic agent ---------- */
 
-.dashboard > section.chat { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.dashboard > section.chat { padding: 0; overflow: hidden; display: flex; flex-direction: column; margin-top: var(--space-4); }
 .chat > h3 { margin: 0; padding: var(--space-4) var(--space-5) 0; }
 .chat > .scope-note { margin: var(--space-1) 0 0; padding: 0 var(--space-5) var(--space-3); border-bottom: 1px solid var(--color-border); }
 .chat > .scope-note:last-child { margin: 0; padding-top: var(--space-2); border-bottom: 0; border-top: 1px solid var(--color-border); }
@@ -376,8 +376,8 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  min-height: 18rem;
-  max-height: min(62vh, 44rem);
+  min-height: 26rem;
+  max-height: min(74vh, 52rem);
   overflow-y: auto;
   padding: var(--space-4) var(--space-5);
   background: var(--color-surface-muted);
@@ -385,7 +385,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
 }
 
 .chat-suggestions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: auto 0; justify-content: center; }
-.chat-suggestions button { border-radius: 999px; font-weight: 500; font-size: 0.875rem; }
+.chat-suggestions button { border-radius: 0; font-weight: 500; font-size: 0.875rem; }
 
 .chat-message {
   position: relative;
@@ -457,7 +457,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
   align-self: flex-start;
   margin: 0;
   padding: var(--space-2) var(--space-3);
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--slate-200);
   color: var(--graphite-700);
   font-size: 0.85rem;
@@ -479,9 +479,9 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
     align-items: start;
   }
   .dashboard:has(> .chat) > header { grid-column: 1 / -1; }
-  .dashboard:has(> .chat) > .chat { grid-column: 1; grid-row: 2 / span 12; position: sticky; top: var(--space-4); }
+  .dashboard:has(> .chat) > .chat { grid-column: 1; grid-row: 2 / span 12; position: sticky; top: var(--space-5); }
   .dashboard:has(> .chat) > section:not(.chat) { grid-column: 2; }
-  .dashboard:has(> .chat) .chat-log { max-height: calc(100dvh - 17rem); }
+  .dashboard:has(> .chat) .chat-log { min-height: calc(100dvh - 20rem); max-height: calc(100dvh - 15rem); }
 }
 
 @media (max-width: 720px) {
@@ -584,7 +584,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
 .picker-option:hover:not(:disabled), .picker-option:focus-visible { background: var(--slate-100); border-color: var(--color-border); color: var(--graphite-900); }
 .picker-option[aria-selected="true"] { background: var(--red-50); border-color: rgb(220 38 38 / 0.35); color: var(--red-700); }
 .picker-option-name { font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.02em; }
-.picker-option-count { padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--slate-100); color: var(--slate-600); font-family: var(--font-mono); font-size: 0.7rem; }
+.picker-option-count { padding: 0.05rem 0.45rem; border-radius: 0; background: var(--slate-100); color: var(--slate-600); font-family: var(--font-mono); font-size: 0.7rem; }
 .picker-option[aria-selected="true"] .picker-option-count { background: #fff; color: var(--red-700); }
 
 /* ---------- team footer ---------- */
@@ -592,32 +592,25 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
 .team-footer {
   grid-column: 1 / -1;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  justify-content: flex-end;
   margin-top: var(--space-2);
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-lg);
-  background: var(--graphite-900);
-  color: var(--slate-300);
 }
-.team-footer-event { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 
 .team { position: relative; }
 .team-button {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  border-radius: 999px;
-  border: 1px solid rgb(255 255 255 / 0.2);
-  background: rgb(255 255 255 / 0.04);
+  border-radius: 0;
+  border: 1px solid var(--graphite-900);
+  background: var(--graphite-900);
   color: #fff;
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1.1rem;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.18);
 }
-.team-button:hover:not(:disabled), .team.pinned .team-button { background: var(--color-accent); border-color: var(--color-accent); }
+.team-button:hover:not(:disabled), .team.pinned .team-button { background: var(--graphite-800); border-color: var(--color-accent); }
 .team-button-label { font-size: 0.75rem; font-weight: 500; color: var(--slate-300); }
-.team-button:hover .team-button-label, .team.pinned .team-button-label { color: #fee2e2; }
+.team-button:hover .team-button-label, .team.pinned .team-button-label { color: var(--slate-200); }
 .team-button-name { font-weight: 700; letter-spacing: 0.03em; }
 
 .team-members {
@@ -682,6 +675,6 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
 @media (max-width: 720px) {
   .picker { flex-basis: 100%; }
   .picker-panel { width: 100%; }
-  .team-footer { padding: var(--space-4); }
+  .team-footer { justify-content: flex-start; }
   .team-members { right: auto; left: 0; transform-origin: bottom left; }
 }
