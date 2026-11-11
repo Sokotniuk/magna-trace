@@ -101,7 +101,7 @@ The station selector below the chat is D's read-only dashboard on the same API. 
 **5. Tests**
 
 ```powershell
-.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests student_b\tests agent\tests --ignore=tests\d5_live_smoke.py
+.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests student_b\tests agent\tests audit_tests --ignore=tests\d5_live_smoke.py
 .venv\Scripts\python.exe -B contracts\b2\validate.py
 ```
 
