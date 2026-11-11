@@ -8,7 +8,7 @@ import re
 
 import httpx
 
-from . import render
+from . import guidance, render
 from .auth import current_employee
 
 _DASHES = str.maketrans({c: "-" for c in "‐‑‒–—―−"})
@@ -125,6 +125,11 @@ class Toolbox:
         action = snap["next_action"]
         session.question_id = action.get("question_id") if action["kind"] == "question" else None
         text = render.snapshot(case_id, snap, self.lookup(case_id))
+        # D41: likely causes and actions for out-of-range findings, placed before the question.
+        block = guidance.diagnosis_block(guidance.case_rows(self._app.state.cases, case_id), snap["findings"])
+        if block:
+            marker = "\n\n**Question for you:**"
+            text = text.replace(marker, block + marker, 1) if marker in text else text + block
         compact = {
             "status": "ok", "shown_to_technician": True, "request_id": envelope["request_id"],
             "open_question": action["text"] if session.question_id else None,
@@ -210,7 +215,17 @@ class Toolbox:
         if envelope.get("status") != "ok":
             return self._failed(envelope, session)
         item = envelope["data"]
-        return render.evidence(item, self.lookup(session.case_id)), {
+        text = render.evidence(item, self.lookup(session.case_id))
+        if item["classification"] == "CALCULATED" and item.get("input_evidence_ids"):
+            # D41: for a deviation, explain likely causes and what to do for that measurement.
+            source = self.lookup(session.case_id)(item["input_evidence_ids"][0]) or {}
+            raw = source.get("raw_fields") or {}
+            result = item.get("result") or {}
+            text += guidance.measurement_block(
+                guidance.case_rows(self._app.state.cases, session.case_id), source.get("measurement", ""),
+                result.get("range_status", ""), raw.get("MEASURE_VALUE"), raw.get("UNIT"),
+                raw.get("LOWER_LIMIT"), raw.get("UPPER_LIMIT"), result.get("deviation"))
+        return text, {
             "status": "ok", "shown_to_technician": True, "request_id": envelope["request_id"],
             "evidence_id": item["evidence_id"], "classification": item["classification"]}
 
@@ -234,7 +249,10 @@ class Toolbox:
         envelope = await self._call("GET", f"/api/v1/cases/{session.case_id}/handover")
         if envelope.get("status") != "ok":
             return self._failed(envelope, session)
-        return render.handover(session.case_id, envelope["data"], self.lookup(session.case_id)), {
+        text = render.handover(session.case_id, envelope["data"], self.lookup(session.case_id))
+        text += guidance.diagnosis_block(guidance.case_rows(self._app.state.cases, session.case_id),
+                                         envelope["data"].get("observations", []))
+        return text, {
             "status": "ok", "shown_to_technician": True, "request_id": envelope["request_id"]}
 
     async def list_stations(self, session: Session, q: str | None = None) -> tuple[str, dict]:

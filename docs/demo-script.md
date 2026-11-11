@@ -28,7 +28,7 @@ ST3003 with four); any of them is a backup.
 |---|---|---|
 | 0:00–0:20 | Show the dashboard: 6 station tiles outlined in red ("5 out"). | "These six stations have recorded values outside their limits. The count comes from the database; it is not a diagnosis." |
 | 0:20–0:45 | Click the outlined **ST1003** tile. Five red rows appear, status **ABOVE**. | "Weld Time 1286.156 ms against an upper limit of 1250: 36.156 above. Five values of one test, one part." |
-| 0:45–1:15 | On the **Weld Time** row click **Copy for chat**. The text (with the error ID `E-…-48`) is copied and already sits in the chat field — press **Enter** (or paste it with Ctrl+V). | "We hand the error ID to the assistant. It continues the same case and shows the rule, the inputs and the raw source row." |
+| 0:45–1:15 | On the **Weld Time** row click **Copy for chat**. The text (with the error ID `E-…-48`) is copied and already sits in the chat field — press **Enter** (or paste it with Ctrl+V). | "We hand the error ID to the assistant. It shows how the deviation was computed, the likely causes and what to check first: one part, one cycle, so quarantine and re-test it, then the electrode tips and cables." |
 | 1:15–1:45 | Type: **"Yes, the welding electrode tips were changed at the start of the shift."** | "My answer is stored word for word under my name, in the same case; the measurements are not changed." |
 | 1:45–2:15 | Type: **"Give me a handover for the next shift."**, then **Print handover** (cancel the dialog). | "The next shift gets findings, my report, open questions and the next check." |
 | 2:15–2:40 | Type: **"Which part should I replace?"** | "No repair advice and no free model prose: a fixed backend text lists what TRACE can do." |
