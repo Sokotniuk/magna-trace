@@ -108,7 +108,7 @@ export default function ChatPanel() {
   return (
     <section className="chat" aria-labelledby="chat-heading">
       <h3 id="chat-heading">Ask TRACE</h3>
-      <p className="scope-note">Interim agent: an open-weight model stands in for Microsoft Copilot (no Copilot credits). The model only chooses the tool; every table and number below is produced by the backend from Oracle data and shown unchanged.</p>
+      <p className="scope-note">Ask about a station in your own words. The AI only picks the check; every value, limit and evidence ID comes from the line database, unchanged. <span className="model-note">Open-weight model, standing in for Microsoft Copilot.</span></p>
       <div className="chat-log" role="log" aria-live="polite">
         {messages.length === 0 && <div className="chat-suggestions">
           {SUGGESTIONS.map((text) => <button key={text} type="button" className="secondary" disabled={busy} onClick={() => void send(text)}>{text}</button>)}
