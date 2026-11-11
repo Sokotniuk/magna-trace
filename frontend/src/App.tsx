@@ -5,6 +5,7 @@ import type { OpenedCase, Station } from './api'
 import demoScope from './demo-scope.json'
 import { apiLabel, isMockMode, sourceLabel } from './api-mode'
 import CaseDetails from './CaseDetails'
+import ChatPanel from './ChatPanel'
 export { FindingsTable } from './FindingsTable'
 
 export default function App() {
@@ -60,6 +61,8 @@ export default function App() {
           ? 'SYNTHETIC ONLY — pinned B2 candidate fixtures. Backend integration pending.'
           : 'LIVE API mode — backend responses only. No mock fallback. Integration verification pending.'}</p>
       </header>
+
+      {!isMockMode && <ChatPanel />}
 
       <section aria-labelledby="station-heading">
         <h3 id="station-heading">Choose a station</h3>

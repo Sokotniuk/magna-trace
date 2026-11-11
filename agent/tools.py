@@ -58,6 +58,9 @@ TOOL_SPECS = [
 ]
 
 
+_ARGUMENTS = {spec["function"]["name"]: set(spec["function"]["parameters"]["properties"]) for spec in TOOL_SPECS}
+
+
 class Session:
     """Server-side state of one conversation: the active case and its open question."""
 
@@ -112,7 +115,10 @@ class Toolbox:
         compact = {
             "status": "ok", "shown_to_technician": True, "request_id": envelope["request_id"],
             "open_question": action["text"] if session.question_id else None,
+            # Values are included so the model can tell which finding a question such as
+            # "where does 50.457 come from" refers to; it still never restates them.
             "findings": [{"measurement": f["measurement"], "range_status": f["range_status"],
+                          "raw_value": f["raw_value"], "deviation": f["deviation"],
                           "evidence_id": f["evidence_id"], "calculation_id": f["calculation_evidence_id"]}
                          for f in snap["findings"]],
         }
@@ -175,6 +181,9 @@ class Toolbox:
                     "list_stations": self.list_stations}
         if name not in handlers:
             return f"Unknown tool {name}.", {"status": "error", "code": "UNKNOWN_TOOL"}
+        # Models sometimes add arguments a tool does not take (e.g. a case_id); ignore those.
+        accepted = _ARGUMENTS[name]
+        args = {k: v for k, v in args.items() if k in accepted}
         try:
             return await handlers[name](session, **args)
         except TypeError:

@@ -107,7 +107,7 @@ def snapshot(case_id: str, snap: dict, lookup: Lookup) -> str:
 
 def evidence(item: dict, lookup: Lookup) -> str:
     eid, cls = item["evidence_id"], item["classification"]
-    head = f"**Evidence `{eid}` ({cls})**"
+    head = f"**Evidence** `{eid}` **({cls})**"
     if cls == "OBSERVED":
         raw = item["raw_fields"]
         unit = f" {raw['UNIT']}" if raw.get("UNIT") else ""
