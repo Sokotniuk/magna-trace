@@ -40,6 +40,13 @@ test('D4: explicit live mode displays backend errors without mock fallback', { t
     for await (const chunk of req) body += chunk
     seen.push({ url: req.url, method: req.method, body, authenticated: req.headers['x-api-key'] === apiKey })
     assert.equal(req.headers['x-api-key'] === apiKey, true, 'The proxy must add the server key')
+    // D34: live mode signs in first; the synthetic upstream reports a signed-in SYNTHETIC employee.
+    if (req.url === '/api/v1/auth/me' || req.url === '/api/v1/auth/info') {
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ request_id: 'synthetic', retrieved_at: '2026-01-01T00:00:00Z', status: 'ok', case_id: null, error: null,
+        data: { company: 'SYNTHETIC company', employee: { employee_id: 'SYN-1', username: 'synthetic', name: 'SYNTHETIC Technician', role: 'Test technician', shift: 'A' } } }))
+      return
+    }
     if (fault === 'reset') { req.socket.destroy(); return }
     if (fault === 'html') {
       res.writeHead(503, { 'Content-Type': 'text/html' })
@@ -89,7 +96,7 @@ test('D4: explicit live mode displays backend errors without mock fallback', { t
     assert.equal(await evaluate(`document.querySelector('button[type="submit"]').disabled`), true)
     assert.equal(await evaluate(`document.querySelector('.case-details') === null`), true)
     assert.equal(await evaluate(`document.querySelector('.synthetic-banner').textContent.includes('LIVE API mode')`), true)
-    assert.equal(seen[0].url, '/api/v1/stations?limit=100')
+    assert.equal(seen.find(item => !item.url.startsWith('/api/v1/auth/')).url, '/api/v1/stations?limit=100')
   })
 
   await t.test('unmarked B2 successes preserve values, live labels and station-only scope', async () => {

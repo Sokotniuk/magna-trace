@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ApiError, listStations, openCase } from './api'
-import type { OpenedCase, Station } from './api'
+import type { OpenedCase, SignedIn, Station } from './api'
 import demoScope from './demo-scope.json'
 import { apiLabel, isMockMode, sourceLabel } from './api-mode'
 import CaseDetails from './CaseDetails'
@@ -11,7 +11,7 @@ import StationPicker from './StationPicker'
 import TeamFooter from './TeamFooter'
 export { FindingsTable } from './FindingsTable'
 
-export default function App() {
+export default function App({ session, onSignOut }: { session?: SignedIn; onSignOut?: () => void } = {}) {
   const [stations, setStations] = useState<Station[]>([])
   const [selectedStation, setSelectedStation] = useState('')
   const [loadingStations, setLoadingStations] = useState(true)
@@ -70,7 +70,16 @@ export default function App() {
             <h2>Diagnostic Dashboard · evidence-driven assistant for test technicians</h2>
           </div>
         </div>
-        <p className="event-tag">MAGNA Hackathon · Košice 2026 · Task 9</p>
+        {session
+          ? <div className="user-chip">
+              <span className="user-initials" aria-hidden="true">{session.employee.name.split(' ').map((part) => part[0]).join('')}</span>
+              <span className="user-text">
+                <span className="user-name">{session.employee.name}</span>
+                <span className="user-meta">{session.employee.role} · shift {session.employee.shift} · {session.company}</span>
+              </span>
+              <button type="button" className="sign-out" onClick={onSignOut}>Sign out</button>
+            </div>
+          : <p className="event-tag">MAGNA Hackathon · Košice 2026 · Task 9</p>}
         <p className="synthetic-banner">{isMockMode
           ? 'SYNTHETIC ONLY — pinned B2 candidate fixtures. Backend integration pending.'
           : 'LIVE API mode — Oracle data through the backend. No mock fallback.'}</p>

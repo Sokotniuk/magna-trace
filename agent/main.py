@@ -12,17 +12,20 @@ from contextlib import asynccontextmanager
 from dataclasses import replace
 
 from fastapi import FastAPI, Request
+from starlette.middleware import Middleware
 
 from student_b.main import Settings, create_app as create_backend
 from student_b.source import DataSource, Failure
 
+from .auth import Auth, Directory, EmployeeGate, make_auth_router
 from .chat import AgentConfig, ChatAgent, make_chat_router
 from .mcp_server import KeyGuard, build_mcp
 from .tools import Toolbox
 
 
 def create_app(settings: Settings | None = None, source: DataSource | None = None,
-               agent_config: AgentConfig | None = None, model_client=None) -> FastAPI:
+               agent_config: AgentConfig | None = None, model_client=None,
+               auth: Auth | None = None) -> FastAPI:
     if settings is None:
         # One chat turn makes several in-process API calls, so the shared limit is raised.
         settings = replace(Settings.from_environment(),
@@ -37,7 +40,14 @@ def create_app(settings: Settings | None = None, source: DataSource | None = Non
         if len(keys) != 1 or not key_ok(keys[0]):
             raise Failure("UNAUTHORIZED", "Valid connector credentials are required", 401)
 
-    toolbox = Toolbox(app, settings.api_key)
+    # Demo employee sign-in in front of every /api/v1 route (decision D34). Appended after
+    # B's RequestBoundary, so it runs inside it and its 401 keeps B's envelope and request ID.
+    auth = auth or Auth(Directory.load())
+    app.state.auth = auth
+    app.user_middleware.append(Middleware(EmployeeGate, auth=auth))
+    app.include_router(make_auth_router(auth, authenticate))
+
+    toolbox = Toolbox(app, settings.api_key, auth.internal_token)
     agent = ChatAgent(toolbox, agent_config or AgentConfig.from_environment(), model_client)
     app.state.agent = agent
     app.include_router(make_chat_router(agent, authenticate))

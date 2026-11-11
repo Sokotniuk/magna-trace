@@ -9,6 +9,7 @@ from .source import Failure
 def record_answer(
     store: CaseStore, case_id: str, body: s.RecordAnswerRequest, *,
     reviewed_conflicts: tuple[str, ...] | None = None,
+    attribution: str | None = None,
 ) -> s.AnswerSnapshot:
     """None means unreviewed; () means reviewed without an identified conflict.
 
@@ -21,7 +22,9 @@ def record_answer(
             raise Failure("INVALID_SCOPE", "Question is stale, answered, or belongs to another case", 409)
         if reviewed_conflicts is not None and not isinstance(reviewed_conflicts, tuple):
             raise Failure("INVALID_SCOPE", "Review must provide a tuple of observed evidence references", 400)
-        report = case.evidence.report(body.question_id, body.answer_text, utc_now(), reviewed_conflicts or ())
+        # attribution: signed-in demo employee when the integration layer supplies one (D34).
+        extra = {"attribution": attribution} if attribution else {}
+        report = case.evidence.report(body.question_id, body.answer_text, utc_now(), reviewed_conflicts or (), **extra)
         updated = diagnostics.record_report(case.snapshot, report, conflict_reviewed=reviewed_conflicts is not None)
         result = s.AnswerSnapshot(
             **updated.model_dump(), report_evidence_id=report.evidence_id,

@@ -93,6 +93,20 @@ The station selector below the chat is D's read-only dashboard on the same API. 
 .venv\Scripts\python.exe -B contracts\b2\validate.py
 ```
 
+## Employee sign-in (demo, D34)
+
+The live dashboard opens after a sign-in. The accounts belong to a **fictional** company
+(Hornád Drive Systems s.r.o.); `agent/employees.json` holds scrypt hashes only.
+
+```powershell
+.venv\Scripts\python.exe -m agent.make_employees   # new passwords → agent\demo-accounts.local.md (git-ignored)
+```
+
+Restart the backend after regenerating. Share `demo-accounts.local.md` inside the team only.
+The sign-in adds to the connector key, it does not replace it; `/mcp` is unchanged. Technician
+answers in the chat are attributed to the signed-in employee. This is a demo access list, not
+corporate identity: no roles, no per-user case isolation.
+
 ## How the agent stays honest
 
 - The model only chooses a tool and its arguments. Every table, value, limit, deviation and evidence ID in the chat is rendered by the backend (`agent/render.py`) and shown unchanged.

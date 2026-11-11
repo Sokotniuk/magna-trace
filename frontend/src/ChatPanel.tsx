@@ -1,3 +1,4 @@
+import { reportSignedOut } from './api'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 
@@ -77,6 +78,7 @@ export default function ChatPanel() {
       })
       const body = await response.json().catch(() => null)
       if (!response.ok || !body || body.status !== 'ok' || typeof body.data?.reply !== 'string') {
+        reportSignedOut(response.status, body?.error?.code)
         const code = body?.error?.code ? `${body.error.code}: ` : ''
         const detail = body?.error?.message ?? `The chat service answered with HTTP ${response.status}.`
         setMessages((current) => [...current, { role: 'problem', text: `${code}${detail} Nothing was assumed.` }])

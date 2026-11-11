@@ -57,6 +57,15 @@ export type Handover = {
   next_action: { kind: 'question' | 'data_check' | 'escalation'; text: string; basis_evidence_ids: string[]; question_id?: string }
 }
 
+export type Employee = { employee_id: string; username: string; name: string; role: string; shift: string }
+export type SignedIn = { employee: Employee; company: string }
+
+// Fired when the backend reports an ended session, so the sign-in screen can return (D34).
+export const SIGNED_OUT_EVENT = 'trace:signed-out'
+export function reportSignedOut(status: number, code: unknown) {
+  if (!isMockMode && status === 401 && code === 'UNAUTHORIZED') window.dispatchEvent(new Event(SIGNED_OUT_EVENT))
+}
+
 export class ApiError extends Error {
   constructor(message: string, public code?: string, public scope?: unknown) {
     super(message)
@@ -110,6 +119,7 @@ async function request(path: string, init?: RequestInit) {
   }
   if (!object(body)) throw new ApiError('Unexpected response format. No data loaded for this request.')
   if (!response.ok || body.status === 'error') {
+    if (object(body.error)) reportSignedOut(response.status, body.error.code)
     if (object(body.error) && typeof body.error.code === 'string' && typeof body.error.message === 'string') {
       throw new ApiError(body.error.message, body.error.code, body.error.scope)
     }
@@ -198,4 +208,46 @@ export async function getHandover(caseId: string, signal?: AbortSignal): Promise
     throw new ApiError('Unexpected handover response. No handover loaded.')
   }
   return data as Handover
+}
+
+function signedIn(body: Record<string, unknown>): SignedIn {
+  const data = body.data
+  if (!object(data) || typeof data.company !== 'string' || !object(data.employee) ||
+      !['employee_id', 'username', 'name', 'role', 'shift'].every((key) => typeof (data.employee as Record<string, unknown>)[key] === 'string')) {
+    throw new ApiError('Unexpected sign-in response.')
+  }
+  return data as SignedIn
+}
+
+// Session cookie is HttpOnly and set by the backend; the page never sees a token or key.
+export async function getSession(signal?: AbortSignal): Promise<SignedIn | null> {
+  const response = await fetch('/api/v1/auth/me', { signal })
+  if (response.status === 401) return null
+  const body = await response.json().catch(() => null)
+  if (!response.ok || !object(body)) throw new ApiError(`HTTP ${response.status}: could not check the sign-in.`)
+  return signedIn(body)
+}
+
+export async function getCompany(): Promise<string> {
+  const body = await fetch('/api/v1/auth/info').then((response) => response.json()).catch(() => null)
+  return object(body) && object(body.data) && typeof body.data.company === 'string' ? body.data.company : ''
+}
+
+export async function signIn(username: string, password: string): Promise<SignedIn> {
+  const response = await fetch('/api/v1/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  const body = await response.json().catch(() => null)
+  if (!response.ok || !object(body) || body.status !== 'ok') {
+    const message = object(body) && object(body.error) && typeof body.error.message === 'string'
+      ? body.error.message : `HTTP ${response.status}: sign-in failed.`
+    throw new ApiError(message, object(body) && object(body.error) ? String(body.error.code) : undefined)
+  }
+  return signedIn(body)
+}
+
+export async function signOut(): Promise<void> {
+  await fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => undefined)
 }

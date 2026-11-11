@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
+from agent.auth import Auth, Directory, Employee, hash_password
 from agent.chat import AgentConfig
 from agent.main import create_app
 from student_b.main import Settings
@@ -41,8 +42,23 @@ def make(model, monkeypatch, **config):
     key = token_urlsafe(32)
     defaults = dict(models=("test-model",), expected_routes=frozenset({ROUTE}), allow_real_data=True, rate_limit_waits=())
     app = create_app(Settings(api_key=key, requests_per_minute=1000), SyntheticSource(),
-                     AgentConfig(**{**defaults, **config}), model)
-    return TestClient(app, raise_server_exceptions=False), {"X-API-Key": key}
+                     AgentConfig(**{**defaults, **config}), model, auth=synthetic_auth())
+    client = TestClient(app, raise_server_exceptions=False)
+    # The dashboard signs in first (D34); the client keeps the session cookie.
+    signed_in = client.post("/api/v1/auth/login", json={"username": TEST_USER, "password": TEST_PASSWORD},
+                            headers={"X-API-Key": key})
+    assert signed_in.status_code == 200, signed_in.text
+    return client, {"X-API-Key": key}
+
+
+TEST_USER, TEST_PASSWORD = "synthetic.tech", token_urlsafe(12)
+
+
+def synthetic_auth() -> Auth:
+    salt = bytes(16)
+    employee = Employee("SYN-0001", TEST_USER, "Synthetic Technician", "Test technician", "A",
+                        salt.hex(), hash_password(TEST_PASSWORD, salt))
+    return Auth(Directory("Synthetic Company", [employee]))
 
 
 def say(client, headers, text, conversation=None):
@@ -83,6 +99,8 @@ def test_full_journey_one_model_call_per_turn(monkeypatch):
 
         handover = say(client, headers, "Handover please", conv)["data"]["reply"]
         assert "MAGNA TRACE handover" in handover and "Yes, the fixture was re-clamped." in handover
+        # the answer is attributed to the signed-in employee, not to an anonymous connector (D34)
+        assert "— Synthetic Technician (SYN-0001), Test technician, shift A — demo sign-in, reported" in handover
         assert "No approved maintenance procedure was consulted" in handover
 
         refusal = say(client, headers, "Which part should I replace?", conv)["data"]

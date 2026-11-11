@@ -9,6 +9,7 @@ import re
 import httpx
 
 from . import render
+from .auth import current_employee
 
 _DASHES = str.maketrans({c: "-" for c in "‐‑‒–—―−"})
 _EVIDENCE = re.compile(r"^E-[0-9a-f]{32}-[1-9][0-9]*$")
@@ -70,17 +71,21 @@ class Session:
 
 
 class Toolbox:
-    def __init__(self, app, api_key: str) -> None:
+    def __init__(self, app, api_key: str, internal_token: str) -> None:
         self._app = app
+        # The internal token passes the employee gate for these in-process calls only.
         self._client = httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://backend.internal",
-            headers={"X-API-Key": api_key}, timeout=60,
+            headers={"X-API-Key": api_key, "X-Trace-Internal": internal_token}, timeout=60,
         )
 
     async def aclose(self) -> None:
         await self._client.aclose()
 
     async def _call(self, method: str, path: str, **kwargs) -> dict:
+        employee = current_employee.get()
+        if employee:
+            kwargs["headers"] = {**kwargs.get("headers", {}), "X-Trace-Employee": employee}
         response = await self._client.request(method, path, **kwargs)
         return response.json()
 

@@ -73,7 +73,9 @@ def make_router(authenticate: Callable, development_routes: bool) -> APIRouter:
 
     @router.post("/cases/{case_id}/answers", operation_id="record_answer", response_model=s.RecordAnswerResponse)
     def record_answer(case_id: str, body: s.RecordAnswerRequest, request: Request):
-        return ok(request, save_answer(request.app.state.cases, case_id, body), case_id)
+        employee = request.scope.get("trace_employee")  # set by the integration layer's sign-in gate (D34)
+        attribution = employee.attribution() if employee is not None else None
+        return ok(request, save_answer(request.app.state.cases, case_id, body, attribution=attribution), case_id)
 
     @router.get("/cases/{case_id}/handover", operation_id="get_handover", response_model=s.GetHandoverResponse)
     def get_handover(case_id: str, request: Request):

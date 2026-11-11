@@ -39,6 +39,7 @@ class EvidenceStore:
     def report(
         self, question_id: str, answer_text: str, reported_at: datetime,
         conflict_evidence_ids: tuple[str, ...] = (),
+        attribution: str = "technician via shared connector",
     ) -> s.Report:
         # Validate every reference before allocating/storing a new report.
         for ref in conflict_evidence_ids:
@@ -48,7 +49,7 @@ class EvidenceStore:
                 raise Failure("INVALID_SCOPE", "A reviewed conflict must name observed evidence", 400)
         report = s.Report(
             evidence_id=self._next_id(), question_id=question_id, answer_text=answer_text,
-            reported_at=reported_at, attribution="technician via shared connector",
+            reported_at=reported_at, attribution=attribution,
             conflict_evidence_ids=tuple(dict.fromkeys(conflict_evidence_ids)),
         )
         self._items[report.evidence_id] = report

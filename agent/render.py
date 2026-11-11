@@ -145,7 +145,8 @@ def evidence(item: dict, lookup: Lookup) -> str:
 def answer(snap: dict) -> str:
     report = snap["technician_reports"][-1]
     lines = [
-        f"Recorded your answer as technician report `{snap['report_evidence_id']}` (not independently verified).",
+        f"Recorded your answer as technician report `{snap['report_evidence_id']}` by {report['attribution']} "
+        "(not independently verified).",
         f"**What changed:** {snap['change_summary']}",
         f"**Unchanged:** the {len(snap['findings'])} findings shown and all captured evidence; "
         f"assessment {snap['assessment']['label']}.",
@@ -172,7 +173,7 @@ def handover(case_id: str, data: dict, lookup: Lookup) -> str:
     lines += ["", f"**Assessment (hypothesis): {data['assessment']['label']}.**", ""]
     if data["technician_reports"]:
         lines.append("**Technician reports (not independently verified)**")
-        lines += [f"- \"{r['answer_text']}\" — reported {r['reported_at']} [`{r['evidence_id']}`]"
+        lines += [f"- \"{r['answer_text']}\" — {r['attribution']}, reported {r['reported_at']} [`{r['evidence_id']}`]"
                   for r in data["technician_reports"]]
     else:
         lines.append("**Technician reports:** none.")
