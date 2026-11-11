@@ -602,42 +602,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
   .user-meta { display: none; }
 }
 
-/* ---------- overview before a case: journey steps + station tiles ---------- */
-
-.overview h3 + .journey { margin-top: 0; }
-.journey {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
-  margin: 0 0 var(--space-3);
-  padding: 0;
-  list-style: none;
-  counter-reset: none;
-}
-.journey li {
-  position: relative;
-  display: grid;
-  gap: 0.2rem;
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-top: 3px solid var(--slate-300);
-  background: var(--color-surface-muted);
-}
-.journey li.current { border-top-color: var(--color-accent); background: var(--color-surface); }
-.journey-index {
-  display: grid;
-  place-items: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  background: var(--graphite-900);
-  color: #fff;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-.journey li.current .journey-index { background: var(--color-accent); }
-.journey-title { font-weight: 700; font-size: 0.9rem; color: var(--graphite-900); }
-.journey-text { font-size: 0.78rem; line-height: 1.4; color: var(--color-text-muted); }
+/* ---------- overview before a case: station tiles ---------- */
 
 .tiles-count { margin-left: auto; font-size: 0.75rem; font-weight: 500; letter-spacing: 0; color: var(--color-text-muted); }
 .station-tiles {
@@ -686,8 +651,6 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
   font-size: 0.8rem; color: var(--graphite-900);
 }
 .pattern-text { flex: 1 1 18rem; }
-/* keep the one-screen layout when the alert is shown: step titles stay, step descriptions hide */
-.overview:has(.pattern-alert) .journey-text { display: none; }
 .pattern-alert button { min-height: 0; padding: 0.3rem 0.7rem; font-size: 0.78rem; }
 
 /* Stations with recorded out-of-range values: outlined and labelled (count from the backend). */
@@ -716,9 +679,6 @@ summary { cursor: pointer; font-weight: 600; color: var(--graphite-800); }
 .legend-swatch { width: 0.9rem; height: 0.9rem; flex: none; border: 2px solid var(--color-accent); background: var(--red-50); }
 @keyframes tile-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-@media (max-width: 720px) {
-  .journey { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 
 /* ---------- layout: one-screen workspace on wide screens ---------- */
 

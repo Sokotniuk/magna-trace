@@ -2,15 +2,9 @@ import { useEffect, useState } from 'react'
 import { getPatterns, getStationOverview } from './api'
 import type { PatternSummary, Station, StationOverview } from './api'
 
-// Shown before a case is opened. Steps are a static guide to the P0 journey; tiles list the
-// stations as the API returned them. The outline uses the backend's out-of-range counts
-// (GET /stations/overview, D37) as they are: nothing is derived or ranked in TypeScript.
-const STEPS = [
-  { title: 'Open a case', text: 'Pick a station. The backend reads its rows from Oracle.' },
-  { title: 'Read findings', text: 'Values, bounds and statuses, each with an evidence ID.' },
-  { title: 'Answer one question', text: 'In the chat. Your answer is stored as technician evidence.' },
-  { title: 'Hand over', text: 'Summary for the next shift with open questions and gaps.' },
-]
+// Shown before a case is opened: tiles list the stations as the API returned them. The outline
+// uses the backend's out-of-range counts (GET /stations/overview, D37) as they are: nothing is
+// derived or ranked in TypeScript.
 
 export default function Overview({ stations, selected, disabled, onOpen }: {
   stations: Station[]
@@ -43,18 +37,7 @@ export default function Overview({ stations, selected, disabled, onOpen }: {
   const flagged = counts ? [...counts.values()].filter((item) => item.above + item.below > 0).length : 0
 
   return (
-    <section className="overview" aria-labelledby="overview-heading">
-      <h3 id="overview-heading">How a diagnosis runs</h3>
-      <ol className="journey">
-        {STEPS.map((step, index) => (
-          <li key={step.title} className={index === 0 ? 'current' : undefined}>
-            <span className="journey-index" aria-hidden="true">{index + 1}</span>
-            <span className="journey-title">{step.title}</span>
-            <span className="journey-text">{step.text}</span>
-          </li>
-        ))}
-      </ol>
-
+    <section className="overview" aria-labelledby="tiles-heading">
       <h3 id="tiles-heading">Stations <span className="tiles-count">{stations.length} returned · click to open a case</span></h3>
       {pattern && <div className="pattern-alert" role="status">
         <span className="pattern-text">
