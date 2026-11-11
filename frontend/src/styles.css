@@ -304,6 +304,17 @@ thead th {
   white-space: nowrap;
 }
 tbody th { min-width: 9rem; font-weight: 600; }
+/* Rows outside their recorded limits stand out; the status chip still carries the meaning in text. */
+tbody tr.row-breach, tbody tr.row-breach:nth-child(even) { background: #fff1f1; }
+tbody tr.row-breach:hover { background: #ffe4e4; }
+tbody tr.row-breach > th { box-shadow: inset 4px 0 0 var(--color-accent); }
+.copy-chat {
+  display: block; margin-top: 0.3rem; min-height: 0;
+  padding: 0.15rem 0.5rem; border: 1px solid var(--color-accent); border-radius: 0;
+  background: var(--color-surface); color: var(--color-accent-strong);
+  font-size: 0.7rem; font-weight: 700; box-shadow: none;
+}
+.copy-chat:hover:not(:disabled) { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
 .id-mid { display: none; }
 .id-head::after { content: "…"; }
 tbody th small.ref { display: inline; line-height: 1.3; }

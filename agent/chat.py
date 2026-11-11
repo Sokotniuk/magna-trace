@@ -158,6 +158,16 @@ class ChatAgent:
         raise ModelUnavailable(type(last).__name__ if last else "no model configured")
 
     async def turn(self, conv: Conversation, text: str) -> dict:
+        # D38: a full evidence ID pasted from the dashboard selects its (existing) case before the model
+        # runs, so the model's choice of arguments cannot lose it. Unknown cases are not adopted.
+        adopted = self.toolbox.adopt_from_text(conv.session, text)
+        if adopted:
+            result = await self._model_turn(conv, text)
+            note = f"Continuing with case `{adopted}` from the dashboard."
+            return {**result, "reply": f"{note}\n\n{result['reply']}"}
+        return await self._model_turn(conv, text)
+
+    async def _model_turn(self, conv: Conversation, text: str) -> dict:
         start = len(conv.messages)
         conv.messages.append({"role": "user", "content": text})
         try:

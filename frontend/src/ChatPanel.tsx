@@ -73,6 +73,19 @@ export default function ChatPanel() {
   const [busy, setBusy] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [caseId, setCaseId] = useState<string | null>(null)
+  const input = useRef<HTMLInputElement>(null)
+
+  // "Copy for chat" on the dashboard also fills the message field (text built from backend values).
+  useEffect(() => {
+    const prefill = (event: Event) => {
+      const text = (event as CustomEvent<unknown>).detail
+      if (typeof text !== 'string') return
+      setDraft(text.slice(0, 2000))
+      window.setTimeout(() => input.current?.focus(), 0)
+    }
+    window.addEventListener('trace:prefill-chat', prefill)
+    return () => window.removeEventListener('trace:prefill-chat', prefill)
+  }, [])
   const [viewer, setViewer] = useState<{ id: string; loading: boolean; evidence?: Evidence; error?: string } | null>(null)
   const viewerRequest = useRef<AbortController | null>(null)
   const closeButton = useRef<HTMLButtonElement>(null)
@@ -173,7 +186,7 @@ export default function ChatPanel() {
       <form onSubmit={handleSubmit} className="chat-form">
         <label htmlFor="chat-input">Message</label>
         <div className="station-controls">
-          <input id="chat-input" type="text" value={draft} maxLength={2000} autoComplete="off" disabled={busy}
+          <input id="chat-input" ref={input} type="text" value={draft} maxLength={2000} autoComplete="off" disabled={busy}
             placeholder="e.g. Investigate station ST3003" onChange={(event) => setDraft(event.target.value)} />
           <button type="submit" disabled={busy || !draft.trim()}>Send</button>
           <button type="button" className="secondary" disabled={busy || messages.length === 0} onClick={reset}>New conversation</button>

@@ -155,8 +155,36 @@ class Toolbox:
         field = "evidence_id" if kind == "observation" else "calculation_evidence_id"
         return [getattr(f, field) for f in findings if " ".join(f.measurement.split()).casefold() == wanted]
 
+    def adopt_from_text(self, session: Session, text: str) -> str | None:
+        """First canonical evidence ID in a technician message, if its case exists (web chat only)."""
+        found = re.search(r"\b[Ee]-[0-9a-f]{32}-[1-9][0-9]*\b", str(text).translate(_DASHES))
+        return self._adopt_case(session, found.group(0)) if found else None
+
+    def _adopt_case(self, session: Session, evidence_id: str | None) -> str | None:
+        """Web chat only (D38): a full evidence ID copied from the dashboard names its case. If that case
+        exists in the store, continue the conversation on it, with its open question if one is waiting.
+        Unknown cases are not adopted, so their IDs keep failing as before (audit F04)."""
+        if not evidence_id:
+            return None
+        value = str(evidence_id).translate(_DASHES).strip().strip("`'\" ")
+        match = re.fullmatch(r"[Ee]-([0-9a-f]{32})-[1-9][0-9]*", value)
+        if not match or match.group(1) == session.case_id:
+            return None
+        try:
+            with self._app.state.cases.locked(match.group(1)) as case:
+                waiting = case.question_id if case.state == "AWAITING_CLARIFICATION" else None
+        except Exception:
+            return None
+        session.case_id, session.question_id = match.group(1), waiting
+        return match.group(1)
+
     async def get_evidence(self, session: Session, evidence_id: str | None = None, measurement: str | None = None,
-                           kind: str = "calculation") -> tuple[str, dict]:
+                           kind: str = "calculation", adopt_case: bool = False) -> tuple[str, dict]:
+        adopted = self._adopt_case(session, evidence_id) if adopt_case else None
+        if adopted:
+            text, result = await self.get_evidence(session, evidence_id, measurement, kind)
+            return (f"Continuing with case `{adopted}` from the dashboard.\n\n{text}",
+                    {**result, "adopted_case_id": adopted})
         if not session.case_id:
             return "There is no active case yet. Tell me which station to investigate.", {"status": "error", "code": "NO_ACTIVE_CASE"}
         if not evidence_id and measurement:
@@ -224,6 +252,8 @@ class Toolbox:
             # The compact case result names deviation sources "calculation_id"; models echo that name.
             args = {**args, "evidence_id": args["calculation_id"], "kind": "calculation"}
         args = {k: v for k, v in args.items() if k in accepted}
+        if name == "get_evidence":
+            args["adopt_case"] = True  # set by the web chat only, never by the model or MCP
         try:
             return await handlers[name](session, **args)
         except TypeError:

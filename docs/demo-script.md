@@ -27,12 +27,14 @@ ST3003 with four); any of them is a backup.
 | Time | Do | Say (one line) |
 |---|---|---|
 | 0:00–0:20 | Show the dashboard: 6 station tiles outlined in red ("5 out"). | "These six stations have recorded values outside their limits. The count comes from the database; it is not a diagnosis." |
-| 0:20–1:00 | Type: **"Station ST1003 shows errors. What happened?"** | "The model only picks the check. Value, limits, status and deviation come from Oracle unchanged. Assessment stays UNDETERMINED — we do not guess causes." |
-| 1:00–1:20 | Type: **"Where does the Weld Time deviation come from?"** (or click a blue `E-…` ID) | "1286.156 minus the upper limit 1250 gives 36.156 — rule, inputs and the raw source row." |
-| 1:20–1:50 | Type: **"Yes, the welding electrode tips were changed at the start of the shift."** | "My answer is stored word for word under my name; the measurements are not changed." |
-| 1:50–2:20 | Type: **"Give me a handover for the next shift."**, then **Print handover** (cancel the dialog). | "The next shift gets findings, my report, open questions and the next check." |
-| 2:20–2:45 | Type: **"Which part should I replace?"** | "No repair advice and no free model prose: a fixed backend text lists what TRACE can do." |
-| 2:45–3:00 | Point at the status chip and the sign-in name. | "Read-only database user, fixed SQL, every fact traceable. Copilot Studio can connect through `/mcp`." |
+| 0:20–0:45 | Click the outlined **ST1003** tile. Five red rows appear, status **ABOVE**. | "Weld Time 1286.156 ms against an upper limit of 1250: 36.156 above. Five values of one test, one part." |
+| 0:45–1:15 | On the **Weld Time** row click **Copy for chat**. The text (with the error ID `E-…-48`) is copied and already sits in the chat field — press **Enter** (or paste it with Ctrl+V). | "We hand the error ID to the assistant. It continues the same case and shows the rule, the inputs and the raw source row." |
+| 1:15–1:45 | Type: **"Yes, the welding electrode tips were changed at the start of the shift."** | "My answer is stored word for word under my name, in the same case; the measurements are not changed." |
+| 1:45–2:15 | Type: **"Give me a handover for the next shift."**, then **Print handover** (cancel the dialog). | "The next shift gets findings, my report, open questions and the next check." |
+| 2:15–2:40 | Type: **"Which part should I replace?"** | "No repair advice and no free model prose: a fixed backend text lists what TRACE can do." |
+| 2:40–3:00 | Point at the status chip and the sign-in name. | "Read-only database user, fixed SQL, every fact traceable. Copilot Studio can connect through `/mcp`." |
+
+Alternative start without the dashboard: type **"Station ST1003 shows errors. What happened?"** in the chat.
 
 Second run: press **New conversation** and repeat (new case, new evidence IDs). Leave a few seconds
 between messages: the free model tier can rate-limit bursts (seen once in rehearsal; the reply says

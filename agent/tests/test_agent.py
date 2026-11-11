@@ -209,3 +209,34 @@ def test_evidence_by_measurement_name_of_a_shown_finding(monkeypatch):
         assert empty["tool_calls"][0]["code"] == "BAD_ARGUMENTS"
         alias = say(client, headers, "deviation source", conv)["data"]["reply"]
         assert f"`E-{case_id}-2` **(CALCULATED)**" in alias
+
+
+def test_evidence_id_copied_from_the_dashboard_continues_that_case(monkeypatch):
+    # D38: a technician pastes a full evidence ID from the dashboard into a fresh chat.
+    with make(FakeModel(), monkeypatch)[0] as client:
+        headers = {"X-API-Key": client.app.state.settings.api_key}
+        opened = client.post("/api/v1/cases", json={"station_number": "SYNTHETIC-STATION"}, headers=headers).json()
+        case_id, calc = opened["case_id"], opened["data"]["findings"][0]["calculation_evidence_id"]
+        client.app.state.agent._client = FakeModel(("get_evidence", {"evidence_id": calc}),
+                                                   ("record_answer", {"answer_text": "ignored model text"}))
+        first = say(client, headers, f"Where does {calc} come from?")
+        assert f"Continuing with case `{case_id}` from the dashboard." in first["data"]["reply"]
+        assert f"`{calc}` **(CALCULATED)**" in first["data"]["reply"] and first["case_id"] == case_id
+        assert first["data"]["open_question"] is True  # the dashboard case's question is now open in chat
+        answered = say(client, headers, "No change on the fixture.", first["data"]["conversation_id"])["data"]
+        assert "Recorded your answer as technician report" in answered["reply"]
+
+
+def test_pasted_dashboard_id_selects_the_case_even_if_the_model_names_the_measurement(monkeypatch):
+    with make(FakeModel(), monkeypatch)[0] as client:
+        headers = {"X-API-Key": client.app.state.settings.api_key}
+        opened = client.post("/api/v1/cases", json={"station_number": "SYNTHETIC-STATION"}, headers=headers).json()
+        case_id, calc = opened["case_id"], opened["data"]["findings"][0]["calculation_evidence_id"]
+        client.app.state.agent._client = FakeModel(("get_evidence", {"measurement": "SYNTHETIC Torque"}))
+        reply = say(client, headers, f"{calc} — where does this deviation come from?")["data"]["reply"]
+        assert reply.startswith(f"Continuing with case `{case_id}` from the dashboard.")
+        assert f"`{calc}` **(CALCULATED)**" in reply
+        # an ID of a case that does not exist selects nothing
+        client.app.state.agent._client = FakeModel(("get_evidence", {"measurement": "SYNTHETIC Torque"}))
+        other = say(client, headers, "E-" + "a" * 32 + "-3 where from?")["data"]["reply"]
+        assert "Continuing with case" not in other and "no active case" in other
