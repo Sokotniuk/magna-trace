@@ -24,7 +24,10 @@ NumericField = Literal["raw_value", "raw_lower", "raw_upper"]
 DeviationRule = Literal["value - upper", "lower - value"]
 
 # Provisional D09 grammar: never infer locale, exponent or categorical meaning.
-_DECIMAL_TEXT = re.compile(r"[+-]?[0-9]+(?:[.][0-9]+)?")
+# D35: a missing leading zero (".292", "-.279") is accepted. The verified profile shows that
+# every D17 nonmatch has exactly this form, the way Oracle renders numbers below one as text.
+# A trailing dot ("1."), a bare dot, commas, exponents and words stay UNPARSEABLE.
+_DECIMAL_TEXT = re.compile(r"[+-]?(?:[0-9]+(?:[.][0-9]+)?|[.][0-9]+)")
 _FLAG_ORDER: tuple[QualityFlag, ...] = (
     "MISSING", "UNPARSEABLE", "LIMIT_UNKNOWN", "LIMIT_INVALID",
     "PARTIAL_BOUNDS", "UNIT_UNKNOWN", "SEMANTICS_UNKNOWN",

@@ -30,6 +30,12 @@ def row(value="2.50", lower="1", upper="3", **changes):
         ("3.0", "1", "3", "WITHIN_RECORDED_BOUNDS", None, None),
         ("-0.000", "0", "0.0", "WITHIN_RECORDED_BOUNDS", None, None),
         (" +1.00 ", "1", "2", "WITHIN_RECORDED_BOUNDS", None, None),
+        # D35: no leading zero, as in the live data (".292" with bounds -1..1 at ST3002)
+        (".292", "-1", "1", "WITHIN_RECORDED_BOUNDS", None, None),
+        ("-.279", "-1", "1", "WITHIN_RECORDED_BOUNDS", None, None),
+        (" +.5 ", "0", "1", "WITHIN_RECORDED_BOUNDS", None, None),
+        (".30", ".15", ".25", "ABOVE", "0.05", "value - upper"),   # 0.30 - 0.25 by hand
+        (".10", ".15", ".25", "BELOW", "0.05", "lower - value"),   # 0.15 - 0.10 by hand
     ],
 )
 def test_hand_calculations(value, lower, upper, status, deviation, rule):
@@ -74,7 +80,7 @@ def test_all_numeric_fields_and_unit_absent_preserves_every_issue():
 
 @pytest.mark.parametrize("value", [
     "abc", "1,5", "1.234,5", "1 000", "NaN", "-Infinity", "Infinity",
-    "1e3", "12mm", "1_000", "١٢", ".5", "1.",
+    "1e3", "12mm", "1_000", "١٢", "1.", ".", "-.", "+.", "..5", ".5.", ". 5", ",5",
 ])
 def test_present_invalid_numeric_text_is_unparseable(value):
     result = analyze_measurement(row(value))
