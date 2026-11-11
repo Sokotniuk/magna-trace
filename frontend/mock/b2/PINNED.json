@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/fpkjpkjjjn/test1",
+  "commit": "145652f917cd8b5ccda40f214a03ba45d490150d",
+  "status": "Corrected B2 v1 candidate; not final freeze",
+  "notice": "SYNTHETIC ONLY",
+  "git_blobs": {
+    "README.md": "c0232190cf3eaa11cd63126636054398759b2e13",
+    "schemas.json": "16ed25c0f7cef07145e61c3e7025c78803d40008",
+    "examples.json": "5ae7645a214f72ebe25cdb63e7d283f162015133",
+    "vite.proxy.example.ts": "347be143e5b5a17b3ffa982811d432d519a0c0c6"
+  }
+}
