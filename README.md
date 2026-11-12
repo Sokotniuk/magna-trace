@@ -1,63 +1,80 @@
-# MAGNA TRACE
+<div align="center">
 
-*Evidence-driven diagnostic assistant* for MAGNA Hackathon **Task 9 — AI asistent pre technikov údržby a testovania**.
+# 🔴 MAGNA TRACE
 
-A technician asks about a test station in a web chat. TRACE reads the live Oracle measurements, shows what is outside its recorded limits and where every number comes from, asks one question the database cannot answer, records the reply, and produces a handover. It never names a cause, a repair or a probability: the assessment stays `UNDETERMINED`.
+**Evidence-driven diagnostic assistant for production test & maintenance technicians**
 
-## One system
+*Built in 24 hours at **MAGNA Hackathon Košice 2026** (Task 9) by team **Codex’sFanClub***
+
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-TypeScript-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Oracle](https://img.shields.io/badge/Oracle-FREEPDB1-F80000?style=for-the-badge&logo=oracle&logoColor=white)
+![LLM](https://img.shields.io/badge/LLM-tool--calling-111827?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-355_passing-22C55E?style=for-the-badge)
+
+</div>
+
+---
+
+## The problem
+
+A test station on the line flags a part. The technician has a database full of raw measurements,
+fail codes nobody documented, and five minutes. Generic AI chatbots answer confidently — and invent
+numbers, causes and repair steps.
+
+## What TRACE does
+
+A technician asks in plain words — *"Station ST1003 shows errors. What happened?"* — and gets:
+
+- 📊 **The facts, straight from Oracle** — value, limits, status and deviation for every measurement out of range, computed with exact `Decimal` arithmetic and **shown unchanged**.
+- 🔎 **An evidence ID for every number** — click it and see the captured source row and the calculation rule. Nothing is re-queried, nothing is retyped by the model.
+- 🧠 **Why it probably happened and what to do** — facts about the pattern (one part or many, one test or a series) plus a fixed troubleshooting table per kind of measurement, clearly marked as *not* a confirmed cause.
+- 🌐 **Cross-station analysis** — finds the same error signature repeating on several stations, detects waves and rhythm, points to the likely shared cause and gives **one action plan to fix it once for all stations**.
+- 💬 **One clarifying question at a time** — the technician's answer is stored word for word, under their name, as separate evidence.
+- 📝 **Handover for the next shift** — findings, technician reports, open questions, next check; printable.
+
+> In the real hackathon data TRACE found that the same error — 4–5 unrelated quantities of one test above their limits, fail code `1001` — hit **6 stations on 4 lines in two waves** (10:55–11:54 and 14:10–14:34), every 13–26 minutes. Not wear: a shared cause.
+
+## How it stays honest
+
+| Rule | How it is enforced |
+| --- | --- |
+| The model never states facts | The LLM only **chooses a tool**; every table, value and ID is rendered by the backend (`agent/render.py`) |
+| No invented SQL | Fixed, parameterised `SELECT` statements only; a **read-only** Oracle user |
+| Exact numbers | `decimal.Decimal` from the raw strings; raw strings kept next to parsed values; verified against Oracle's own arithmetic for all 1 524 rows — **0 mismatches** |
+| Unknowns stay unknown | Meaning of fail code `1001`, `NULL`, units and timezone are reported as *unknown*, never guessed |
+| Pasted IDs can't be hijacked | An evidence ID pasted into the chat is answered **deterministically**, without the model |
+| No secrets in the browser | API key stays in the server-side proxy; HttpOnly session cookie; scrypt-hashed demo accounts |
+
+## Architecture
 
 ```text
-Browser: React dashboard + chat panel (D)
-   │  /api/v1/*  via Vite proxy — the API key stays on the server
+Browser ── React + TypeScript dashboard + chat (no diagnostic logic in TS)
+   │  /api/v1/* through the Vite proxy (API key added server-side)
    ▼
 FastAPI  agent.main:create_app
-   ├─ /api/v1/cases, /evidence, /answers, /handover, /stations   contract B2, cases, evidence (B)
-   ├─ /api/v1/chat   agent: the model picks a tool, the backend renders the text (C)
-   └─ /mcp           the same tools for MCP clients such as Copilot Studio (C)
+   ├─ agent/       chat agent (tool calling), sign-in, guidance, cross-station patterns, MCP endpoint
+   └─ backend/app  REST contract B2: cases, evidence, answers, handover, stations
+          ├─ oracle_repo.py    fixed parameterised SELECTs, row limits, timeouts
+          └─ measurements.py   Decimal parsing, range status, quality flags
    ▼
-Oracle access and Decimal analysis (A) ──► Oracle FREEPDB1 / HACKATON, SELECT-only user
+Oracle FREEPDB1 / HACKATON  (SELECT-only user)
 ```
 
-| Folder | Owner | Content |
-| --- | --- | --- |
-| `backend/app/` | A, B | A: `oracle_repo.py`, `measurements.py`. B: `main.py`, `api.py`, `schemas.py` (contract B2), `cases.py`, `evidence.py`, `answers.py`, `diagnostics.py`, `source.py` |
-| `agent/` | C | Web-chat agent, sign-in, deterministic texts, MCP endpoint, application factory `agent.main:create_app` |
-| `copilot/` | C | Instructions and tool descriptions for the runtime Copilot Studio agent |
-| `frontend/` | D | React dashboard with mock and live modes; chat panel in live mode |
-| `tests/` | all | A's module tests (top level), `api/` (B), `agent/` (C), `audit/` (independent audit); D's QA checklist, expected values, backup plan and pitch |
-| `contracts/b2/` | B | JSON Schema, examples and validator of the REST contract |
-| `docs/` | team | Product, architecture, plan, decisions, `demo-script.md`, audit report; `student_b/` and `student_c/` hold the owners' reports and notes |
-| `devtools/` | B, C | B's context-pack, usage-gate and `verify.py`; `oracle/create_readonly_user.sql` |
-
-This is the layout of `AGENTS.md` §5 (decision D40). The earlier self-contained backend of student C
-was removed from the tree (audit F13: not a fallback); it remains in the Git history before D40.
-
-### Branches
-
-| Branch | Purpose |
+| Folder | Content |
 | --- | --- |
-| `main` | Integrated state, merged through pull requests only (by B) |
-| `integration/all` | Integrator's working branch; open a PR from it into `main` |
-| `feature/nikita` | D's unmerged D4 live case list; needs B's `GET /cases` routes first |
+| `backend/app/` | Oracle repository, measurement analysis, FastAPI app, cases, evidence, diagnostics |
+| `agent/` | LLM agent, deterministic rendering, troubleshooting rules, pattern analysis, sign-in, MCP |
+| `frontend/` | React dashboard: station tiles, findings table, evidence drill-down, chat |
+| `contracts/b2/` | JSON Schema, examples and validator of the REST contract |
+| `copilot/` | Instructions for a Microsoft Copilot Studio agent (MCP-ready) |
+| `tests/` | 355 tests: analysis, API, agent, independent audit |
+| `docs/` | Product spec, architecture, 40+ recorded decisions, independent audit, hackathon process notes |
 
-Student work starts on its own `feature/<name>` branch from `main` (AGENTS §10).
+## Run it locally
 
-## What is verified, and what is not
-
-| Check | Result (2026-11-11, integrator's machine) |
-| --- | --- |
-| Tests | 345 (A, B, agent, audit) · B2 validator PASS |
-| Live Oracle through the integrated app | 1524 measurement rows, 23 stations |
-| Station ST3003 | Four values above their upper limit (Angle 7.592, Vibration 0.354, Position Accuracy 0.292, Motor Speed 50.457), all serial `1000000203` at one timestamp; Screw Count within limits with fail code 1001 |
-| Chat journey, API and browser | Case → source of 50.457 (calculated evidence) → technician answer recorded by the agent on its own → refusal of repair advice → handover; one model call and under 2 s per turn |
-| **Microsoft Copilot** | **Not verified.** The available Copilot Studio tenant has no credits. An open-weight model stands in and is labelled so in the UI; `/mcp` is ready for Copilot Studio |
-| Not claimed | Root causes, meaning of fail code 1001, intervention/scrap limits, timezone of timestamps, repair procedures |
-
-## Run it (Windows PowerShell, from the repository root)
-
-Needs Python 3.12+, Node 22+, and the Oracle container with a SELECT-only user (`devtools/oracle/create_readonly_user.sql`).
-
-**1. Install once**
+Needs Python 3.12+, Node 22+, Docker with Oracle Database Free and a SELECT-only user (`devtools/oracle/create_readonly_user.sql`), and any OpenAI-compatible model endpoint.
 
 ```powershell
 python -m venv .venv
@@ -65,71 +82,35 @@ python -m venv .venv
 cd frontend; npm install; cd ..
 ```
 
-**2. Server settings** — environment variables of the server process; never in Git, the browser or `VITE_*`.
-
-| Variable | Meaning |
-| --- | --- |
-| `TRACE_API_KEY` | 32–256 ASCII characters; shared by backend and Vite proxy |
-| `ORACLE_USER`, `ORACLE_PASSWORD`, `ORACLE_DSN` | SELECT-only account, e.g. DSN `localhost:1521/FREEPDB1` |
-| `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODEL` | OpenAI-compatible model endpoint; `OPENAI_MODEL` is a comma-separated list of fixed model IDs (setup: `docs/student_c/llm_router_setup.md`) |
-| `TRACE_EXPECTED_ROUTE` | Comma-separated approved `provider/model` routes; answers from other routes are rejected |
-| `TRACE_ALLOW_REAL_DATA` | `1` only after data sharing with the model provider is approved; otherwise tools are blocked in the chat |
-
-**3. Backend** (one worker: cases live in memory)
+Server environment (never in Git or the browser): `TRACE_API_KEY` (32+ chars), `ORACLE_USER`, `ORACLE_PASSWORD`, `ORACLE_DSN`,
+`OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODEL`, `TRACE_EXPECTED_ROUTE`, `TRACE_ALLOW_REAL_DATA=1` (only after data sharing is approved).
 
 ```powershell
-.venv\Scripts\python.exe -m uvicorn agent.main:create_app --factory --host 127.0.0.1 --port 8000 --workers 1 --no-access-log
+.venv\Scripts\python.exe -m agent.make_employees          # demo accounts → agent\demo-accounts.local.md (git-ignored)
+.venv\Scripts\python.exe -m uvicorn agent.main:create_app --factory --host 127.0.0.1 --port 8000 --workers 1
 ```
-
-**4. Dashboard with chat**, in a second terminal
 
 ```powershell
 cd frontend
-$env:TRACE_API_TARGET = "http://127.0.0.1:8000"; $env:VITE_TRACE_API_MODE = "live"
-npm run dev
+$env:VITE_TRACE_API_MODE = "live"; npm.cmd run dev        # open http://127.0.0.1:5173
 ```
 
-Open `http://127.0.0.1:5173`. In **Ask TRACE** try:
+Tests: `.venv\Scripts\python.exe -m pytest -q tests --ignore=tests\d5_live_smoke.py`
 
-1. `Investigate station ST3003. What happened?`
-2. `Where did 50.457 come from?`
-3. `Yes, the fixture was re-clamped after the morning shift.`
-4. `Which part should I replace?`
-5. `Give me a handover for the next shift.`
+## Limitations
 
-The station selector below the chat is D's read-only dashboard on the same API. Without a model configured the chat answers 503 and the dashboard still works. The synthetic mock mode is described in `docs/README_dashboard_mock.md` and `frontend/README.md`.
+- Troubleshooting rules are general engineering knowledge, **not** a MAGNA-approved procedure; the system says so in every answer.
+- Cases and sessions live in memory (single worker); a restart clears them.
+- TRACE is read-only — it plans fixes, it does not send commands to machines.
+- Microsoft Copilot Studio was not available during the event (no tenant credits); an open-weight model stood in, and the `/mcp` endpoint is ready for Copilot.
 
-**5. Tests**
+## Team Codex’sFanClub
 
-```powershell
-.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider tests --ignore=tests\d5_live_smoke.py
-.venv\Scripts\python.exe -B contracts\b2\validate.py
-```
+| Member | |
+| --- | --- |
+| **Nikita Sokotniuk** | Integration, LLM agent & chat, cross-station analysis, troubleshooting rules, sign-in, UI/UX |
+| **Ivan Kysel** | Team member |
+| **Mykyta Terenia** | Team member — dashboard |
+| **Vasyl Slyvka** | Team member |
 
-## Employee sign-in (demo, D34)
-
-The live dashboard opens after a sign-in. The accounts belong to a **fictional** company
-(Hornád Drive Systems s.r.o.); `agent/employees.json` holds scrypt hashes only.
-
-```powershell
-.venv\Scripts\python.exe -m agent.make_employees   # new passwords → agent\demo-accounts.local.md (git-ignored)
-```
-
-Restart the backend after regenerating. Share `demo-accounts.local.md` inside the team only.
-The sign-in adds to the connector key, it does not replace it; `/mcp` is unchanged. Technician
-answers in the chat are attributed to the signed-in employee. This is a demo access list, not
-corporate identity: no roles, no per-user case isolation.
-
-## How the agent stays honest
-
-- The model only chooses a tool and its arguments. Every table, value, limit, deviation and evidence ID in the chat is rendered by the backend (`agent/render.py`) and shown unchanged.
-- Each displayed fact has a case-local evidence ID that resolves to the captured source row or to the calculation with its rule and inputs.
-- Range status, quality flags and the raw fail code are separate; `1001` and an empty code are never read as FAIL or PASS.
-- A technician's answer is stored as an unverified report; it changes the next step, never the observations or the label.
-- All routes except `/healthz` and `/readyz` require `X-API-Key`; logs contain request IDs, not headers or keys. The server keeps the active case per conversation, so the model never handles case identifiers.
-
-## Open points
-
-- B to review the ordering of displayed findings in `backend/app/diagnostics.py` (decision D31).
-- Live Copilot gate G0 (credits), conflict-review flow for answers, total Oracle login deadline (D15), comparison module (A7).
-- Two timed rehearsals of the demo (`docs/demo-script.md`, `tests/demo_backup_plan.md`).
+Full commit history of all contributors is preserved. Process documents from the event (plans, hand-offs, per-student notes) are in `docs/hackathon/`, the independent backend audit in `docs/audit/`, every design decision in `docs/decisions.md`.
