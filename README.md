@@ -108,7 +108,7 @@ Tests: `.venv\Scripts\python.exe -m pytest -q tests --ignore=tests\d5_live_smoke
 
 | Member | |
 | --- | --- |
-| **Nikita Sokotniuk** | Integration, LLM agent & chat, cross-station analysis, troubleshooting rules, sign-in, UI/UX |
+| **Nikita Sokotniuk** | Integration, LLM agent & chat, cross-station analysis, troubleshooting rules, Fronted |
 | **Ivan Kysel** | Team member |
 | **Mykyta Terenia** | Team member — dashboard |
 | **Vasyl Slyvka** | Team member |
